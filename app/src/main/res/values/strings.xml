@@ -2,4 +2,9 @@
     <string name="app_name">TVBCapps</string>
     <string name="teks_card_latihan">Latihan Rutin</string>
     <string name="teks_rekap_keuangan">Rekap Keuangan</string>
+
+    <!--Profil Screen-->
+    <string name="edit_profil">Edit Profil</string>
+    <string name="tentang_aplikasi">Tentang Aplikasi</string>
+    <string name="keluar">Keluar</string>
 </resources>

@@ -1,6 +1,5 @@
 package com.tvbc.tvbcapps.ui.theme.screen
 
-
 import android.content.res.Configuration
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
@@ -27,12 +26,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.rememberNavController
 import com.tvbc.tvbcapps.ui.theme.TVBCappsTheme
 import com.tvbc.tvbcapps.R
+import com.tvbc.tvbcapps.navigation.Screen
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MainScreen() {
+fun MainScreen(navController: NavHostController) {
     Scaffold(
         containerColor = Color.Transparent,
         topBar = {
@@ -65,7 +67,7 @@ fun MainScreen() {
             )
         },
         bottomBar = {
-            BottomNavigationBar()
+            BottomNavigationBar(navController)
         }
     ) { innerPadding ->
         Box(
@@ -79,7 +81,7 @@ fun MainScreen() {
 }
 
 @Composable
-fun BottomNavigationBar() {
+fun BottomNavigationBar(navController: NavHostController) {
     NavigationBar(
         modifier = Modifier
             .shadow(elevation = 16.dp, shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp))
@@ -92,7 +94,7 @@ fun BottomNavigationBar() {
             onClick = { /* Navigasi ke halaman beranda */ },
             icon = {
                 Icon(
-                    painter = painterResource(id = R.drawable.logohome),
+                    painter = painterResource(id = R.drawable.logohomeaktif),
                     contentDescription = "Beranda",
                     modifier = Modifier.size(32.dp),
                     tint = Color.Unspecified
@@ -171,7 +173,7 @@ fun BottomNavigationBar() {
         )
         NavigationBarItem(
             selected = false,
-            onClick = { /* Navigasi ke halaman profil */ },
+            onClick = { navController.navigate(Screen.Profil.route) },
             icon = {
                 Icon(
                     painter = painterResource(id = R.drawable.logoprofil),
@@ -356,6 +358,6 @@ fun CurvedBackground() {
 @Composable
 fun MainScreenPreview() {
     TVBCappsTheme {
-        MainScreen()
+        MainScreen(rememberNavController())
     }
 }
