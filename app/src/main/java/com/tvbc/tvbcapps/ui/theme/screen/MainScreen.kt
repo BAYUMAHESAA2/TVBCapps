@@ -1,7 +1,6 @@
 package com.tvbc.tvbcapps.ui.theme.screen
 
 import android.content.res.Configuration
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -17,71 +16,34 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.tvbc.tvbcapps.R
 import com.tvbc.tvbcapps.component.BottomNavigationBar
+import com.tvbc.tvbcapps.component.CurvedBackground
+import com.tvbc.tvbcapps.component.TopBar
 import com.tvbc.tvbcapps.ui.theme.TVBCappsTheme
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(navController: NavHostController) {
     Scaffold(
         containerColor = Color.Transparent,
         topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = buildAnnotatedString {
-                            withStyle(style = SpanStyle(fontSize = MaterialTheme.typography.headlineSmall.fontSize)) {
-                                append("TVBC")
-                            }
-                            withStyle(style = SpanStyle(fontSize = MaterialTheme.typography.bodySmall.fontSize)) {
-                                append("apps")
-                            }
-                        },
-                        color = Color.White
-                    )
-                },
-                actions = {
-                    IconButton(onClick = {}) {
-                        Icon(
-                            imageVector = Icons.Default.Notifications,
-                            contentDescription = "Notifikasi",
-                            tint = Color.White
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color(0xFF660000)
-                )
-            )
+            TopBar()
         },
         bottomBar = {
             BottomNavigationBar(navController)
@@ -217,42 +179,6 @@ fun ScreenContent(modifier: Modifier = Modifier) {
                 }
             }
         }
-    }
-}
-
-@Composable
-fun CurvedBackground() {
-    val headerHeight = 160.dp
-    val curveHeight = 40.dp
-    val density = LocalDensity.current
-
-    Canvas(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(headerHeight)
-    ) {
-        val width = size.width
-        val height = size.height
-        val curveHeightPx = with(density) { curveHeight.toPx() }
-
-        // Background color (dark red)
-        val backgroundColor = Color(0xFF660000)
-
-        // Main path with curve
-        val path = Path().apply {
-            moveTo(0f, 0f)
-            lineTo(width, 0f)
-            lineTo(width, height - curveHeightPx)
-            quadraticTo(
-                width / 2f,
-                height + curveHeightPx / 2,
-                0f,
-                height - curveHeightPx
-            )
-            close()
-        }
-
-        drawPath(path, backgroundColor)
     }
 }
 
