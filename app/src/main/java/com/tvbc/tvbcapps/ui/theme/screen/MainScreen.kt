@@ -4,17 +4,34 @@ import android.content.res.Configuration
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material3.*
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.platform.LocalDensity
@@ -28,9 +45,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
-import com.tvbc.tvbcapps.ui.theme.TVBCappsTheme
 import com.tvbc.tvbcapps.R
-import com.tvbc.tvbcapps.navigation.Screen
+import com.tvbc.tvbcapps.component.BottomNavigationBar
+import com.tvbc.tvbcapps.ui.theme.TVBCappsTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -77,120 +94,6 @@ fun MainScreen(navController: NavHostController) {
         ) {
             ScreenContent()
         }
-    }
-}
-
-@Composable
-fun BottomNavigationBar(navController: NavHostController) {
-    NavigationBar(
-        modifier = Modifier
-            .shadow(elevation = 16.dp, shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp))
-            .clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp)),
-        containerColor = Color.White,
-        contentColor = Color.Black
-    ) {
-        NavigationBarItem(
-            selected = true,
-            onClick = { /* Navigasi ke halaman beranda */ },
-            icon = {
-                Icon(
-                    painter = painterResource(id = R.drawable.logohomeaktif),
-                    contentDescription = "Beranda",
-                    modifier = Modifier.size(32.dp),
-                    tint = Color.Unspecified
-                )
-            },
-            label = { Text("Beranda") },
-            colors = NavigationBarItemDefaults.colors(
-                indicatorColor = Color.Transparent,
-                selectedIconColor = Color.Unspecified,
-                selectedTextColor = Color.Black,
-                unselectedIconColor = Color.Unspecified,
-                unselectedTextColor = Color.Gray
-            )
-        )
-
-        NavigationBarItem(
-            selected = false,
-            onClick = { /* Navigasi ke halaman latihan */ },
-            icon = {
-                Icon(
-                    painter = painterResource(id = R.drawable.logoabsen),
-                    contentDescription = "Absen",
-                    modifier = Modifier.size(32.dp),
-                    tint = Color.Unspecified
-                )
-            },
-            label = { Text("Absen") },
-            colors = NavigationBarItemDefaults.colors(
-                indicatorColor = Color.Transparent,
-                selectedIconColor = Color.Unspecified,
-                selectedTextColor = Color.Black,
-                unselectedIconColor = Color.Unspecified,
-                unselectedTextColor = Color.Gray
-            )
-        )
-
-        NavigationBarItem(
-            selected = false,
-            onClick = { /* Navigasi ke halaman profil */ },
-            icon = {
-                Icon(
-                    painter = painterResource(id = R.drawable.logokeuangan),
-                    contentDescription = "Keuangan",
-                    modifier = Modifier.size(32.dp),
-                    tint = Color.Unspecified
-                )
-            },
-            label = { Text("Keuangan") },
-            colors = NavigationBarItemDefaults.colors(
-                indicatorColor = Color.Transparent,
-                selectedIconColor = Color.Unspecified,
-                selectedTextColor = Color.Black,
-                unselectedIconColor = Color.Unspecified,
-                unselectedTextColor = Color.Gray
-            )
-        )
-        NavigationBarItem(
-            selected = false,
-            onClick = { /* Navigasi ke halaman profil */ },
-            icon = {
-                Icon(
-                    painter = painterResource(id = R.drawable.logotimeline),
-                    contentDescription = "Timeline",
-                    modifier = Modifier.size(32.dp),
-                    tint = Color.Unspecified
-                )
-            },
-            label = { Text("Timeline") },
-            colors = NavigationBarItemDefaults.colors(
-                indicatorColor = Color.Transparent,
-                selectedIconColor = Color.Unspecified,
-                selectedTextColor = Color.Black,
-                unselectedIconColor = Color.Unspecified,
-                unselectedTextColor = Color.Gray
-            )
-        )
-        NavigationBarItem(
-            selected = false,
-            onClick = { navController.navigate(Screen.Profil.route) },
-            icon = {
-                Icon(
-                    painter = painterResource(id = R.drawable.logoprofil),
-                    contentDescription = "Profil",
-                    modifier = Modifier.size(32.dp),
-                    tint = Color.Unspecified
-                )
-            },
-            label = { Text("Profil") },
-            colors = NavigationBarItemDefaults.colors(
-                indicatorColor = Color.Transparent,
-                selectedIconColor = Color.Unspecified,
-                selectedTextColor = Color.Black,
-                unselectedIconColor = Color.Unspecified,
-                unselectedTextColor = Color.Gray
-            )
-        )
     }
 }
 
