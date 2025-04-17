@@ -48,6 +48,7 @@ import androidx.navigation.compose.rememberNavController
 import com.tvbc.tvbcapps.R
 import com.tvbc.tvbcapps.component.BottomNavigationBar
 import com.tvbc.tvbcapps.component.TopBar
+import com.tvbc.tvbcapps.navigation.Screen
 import com.tvbc.tvbcapps.ui.theme.TVBCappsTheme
 
 @Composable
@@ -67,13 +68,13 @@ fun ProfilScreen(navController: NavHostController) {
                 .padding(innerPadding)
         ) {
             CurvedBackgroundProfil()
-            ScreenContentProfil()
+            ScreenContentProfil(navController = navController)
         }
     }
 }
 
 @Composable
-fun ScreenContentProfil(modifier: Modifier = Modifier) {
+fun ScreenContentProfil(modifier: Modifier = Modifier, navController: NavHostController) {
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -109,7 +110,7 @@ fun ScreenContentProfil(modifier: Modifier = Modifier) {
             Spacer(modifier = Modifier.height(30.dp))
 
             Button(
-                onClick = { /* aksi */ },
+                onClick = {navController.navigate(Screen.EditProfil.route)},
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp)
@@ -257,7 +258,7 @@ fun CurvedBackgroundProfil() {
             lineTo(width, height - curveHeightPx)
             quadraticTo(
                 width / 2f,
-                height - curveHeightPx * 2, // lebih tinggi dari sisi kanan/kiri
+                height - curveHeightPx * 2,
                 0f,
                 height - curveHeightPx
             )
@@ -267,13 +268,11 @@ fun CurvedBackgroundProfil() {
     }
 }
 
-
-
 @Preview(showBackground = true)
 @Preview(uiMode = Configuration.UI_MODE_NIGHT_YES, showBackground = true)
 @Composable
 fun ProfilScreenPreview() {
     TVBCappsTheme {
-        MainScreen(rememberNavController())
+        ProfilScreen(rememberNavController())
     }
 }

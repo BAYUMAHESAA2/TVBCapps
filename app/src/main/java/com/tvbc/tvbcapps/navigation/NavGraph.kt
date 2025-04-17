@@ -5,6 +5,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.tvbc.tvbcapps.ui.theme.screen.EditProfilScreen
 import com.tvbc.tvbcapps.ui.theme.screen.MainScreen
 import com.tvbc.tvbcapps.ui.theme.screen.ProfilScreen
 
@@ -19,6 +20,9 @@ fun SetupNavGraph(navController: NavHostController = rememberNavController()) {
         }
         composable(route = Screen.Profil.route) {
             ProfilScreen(navController)
+        }
+        composable(route = Screen.EditProfil.route) {
+            EditProfilScreen(navController)
         }
     }
 

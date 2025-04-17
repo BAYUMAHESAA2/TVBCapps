@@ -159,8 +159,8 @@ fun ScreenContent(modifier: Modifier = Modifier) {
                 items(3) { index ->
                     Card(
                         modifier = Modifier
-                            .width(200.dp) // Ubah sesuai keinginanmu
-                            .height(120.dp), // Ubah sesuai keinginanmu
+                            .width(200.dp)
+                            .height(120.dp),
                         shape = RoundedCornerShape(16.dp),
                         elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
                         colors = CardDefaults.cardColors(containerColor = Color.White)
