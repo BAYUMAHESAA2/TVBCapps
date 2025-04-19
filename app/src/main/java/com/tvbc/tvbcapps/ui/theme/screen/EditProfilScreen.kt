@@ -79,20 +79,16 @@ fun EditProfilScreen(navController: NavHostController) {
             )
         }
     ) { innerPadding ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-        ) {
-            ScreenContentEditProfil()
-        }
+        ScreenContentEditProfil(
+                modifier = Modifier.padding(innerPadding)
+            )
     }
 }
 
 @Composable
-fun ScreenContentEditProfil() {
+fun ScreenContentEditProfil(modifier: Modifier = Modifier) {
     Box(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
             .background(Color(0xFFFAFAFA))
     ) {

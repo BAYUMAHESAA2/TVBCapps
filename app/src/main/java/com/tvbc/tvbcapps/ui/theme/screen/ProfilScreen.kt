@@ -56,7 +56,7 @@ fun ProfilScreen(navController: NavHostController) {
     Scaffold(
         containerColor = Color.Transparent,
         topBar = {
-            TopBar()
+            TopBar(navController)
         },
         bottomBar = {
             BottomNavigationBar(navController)

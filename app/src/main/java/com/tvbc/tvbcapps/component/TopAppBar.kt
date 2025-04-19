@@ -14,10 +14,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
+import androidx.navigation.NavHostController
+import com.tvbc.tvbcapps.navigation.Screen
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TopBar() {
+fun TopBar(navController: NavHostController) {
     TopAppBar(
         title = {
             Text(
@@ -33,7 +35,9 @@ fun TopBar() {
             )
         },
         actions = {
-            IconButton(onClick = {}) {
+            IconButton(onClick = {
+                navController.navigate(Screen.Notifikasi.route)
+            }) {
                 Icon(
                     imageVector = Icons.Default.Notifications,
                     contentDescription = "Notifikasi",

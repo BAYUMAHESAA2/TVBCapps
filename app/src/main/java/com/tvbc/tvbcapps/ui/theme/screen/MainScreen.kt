@@ -2,7 +2,6 @@ package com.tvbc.tvbcapps.ui.theme.screen
 
 import android.content.res.Configuration
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -43,19 +42,15 @@ fun MainScreen(navController: NavHostController) {
     Scaffold(
         containerColor = Color.Transparent,
         topBar = {
-            TopBar()
+            TopBar(navController)
         },
         bottomBar = {
             BottomNavigationBar(navController)
         }
     ) { innerPadding ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-        ) {
-            ScreenContent()
-        }
+        ScreenContent(
+            modifier = Modifier.padding(innerPadding)
+        )
     }
 }
 
@@ -64,7 +59,7 @@ fun ScreenContent(modifier: Modifier = Modifier) {
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(Color(0xFFFAFAFA))
+
     ) {
         CurvedBackground()
         LazyRow(

@@ -7,4 +7,10 @@
     <string name="edit_profil">Edit Profil</string>
     <string name="tentang_aplikasi">Tentang Aplikasi</string>
     <string name="keluar">Keluar</string>
+
+    <!--Notifikasi Screen-->
+    <string name="kembali">Kembali</string>
+    <string name="notifikasi">Notifikasi</string>
+    <string name="notif">Jadwal Latihan</string>
+    <string name="notif2">Bayar Kas</string>
 </resources>

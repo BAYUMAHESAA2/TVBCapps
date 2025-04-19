@@ -29,8 +29,8 @@ fun BottomNavigationBar(navController: NavHostController) {
 
     val navItems = listOf(
         NavItem(Screen.Home, "Beranda", R.drawable.logohome, R.drawable.logohomeaktif),
-        NavItem(Screen.EditProfil, "Absen", R.drawable.logoabsen, R.drawable.logoabsen),
-        NavItem(Screen.Home, "Keuangan", R.drawable.logokeuangan, R.drawable.logokeuangan),
+        NavItem(Screen.Absen, "Absen", R.drawable.logoabsen, R.drawable.logoabsenaktif),
+        NavItem(Screen.Keuangan, "Keuangan", R.drawable.logokeuangan, R.drawable.logokeuanganaktif),
         NavItem(Screen.Profil, "Profil", R.drawable.logoprofil, R.drawable.logoprofil)
     )
 
