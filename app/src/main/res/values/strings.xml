@@ -32,4 +32,7 @@
 
     <!--Keuangan Screen-->
     <string name="total_saldo">Total Saldo</string>
+
+    <!--Form Absen Screen-->
+    <string name="form_absen">Form Absen</string>
 </resources>

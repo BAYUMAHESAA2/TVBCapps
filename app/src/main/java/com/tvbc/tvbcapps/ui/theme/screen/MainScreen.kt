@@ -15,6 +15,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
@@ -35,6 +37,7 @@ import com.tvbc.tvbcapps.R
 import com.tvbc.tvbcapps.component.BottomNavigationBar
 import com.tvbc.tvbcapps.component.CurvedBackground
 import com.tvbc.tvbcapps.component.TopBar
+import com.tvbc.tvbcapps.navigation.Screen
 import com.tvbc.tvbcapps.ui.theme.TVBCappsTheme
 
 @Composable
@@ -49,13 +52,14 @@ fun MainScreen(navController: NavHostController) {
         }
     ) { innerPadding ->
         ScreenContent(
-            modifier = Modifier.padding(innerPadding)
+            modifier = Modifier.padding(innerPadding),
+            navController
         )
     }
 }
 
 @Composable
-fun ScreenContent(modifier: Modifier = Modifier) {
+fun ScreenContent(modifier: Modifier = Modifier, navController: NavHostController) {
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -92,12 +96,24 @@ fun ScreenContent(modifier: Modifier = Modifier) {
                                 style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                                 color = Color.Black
                             )
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(
-                                text = "Card ${index + 1}",
-                                style = MaterialTheme.typography.bodyLarge,
-                                color = Color.Black
-                            )
+                            Spacer(modifier = Modifier.height(80.dp))
+                           Button(
+                               onClick = {
+                                   navController.navigate(Screen.FormAbsen.route)
+                               },
+                               colors = ButtonDefaults.buttonColors(
+                                   containerColor = Color(0xFF660000), // Warna marun sesuai gambar
+                                   contentColor = Color.White // Warna teks putih
+                               ),
+
+                               shape = RoundedCornerShape(8.dp),
+
+                           ) {
+                               Text(
+                                   text = "Absen ${index + 1}",
+                                   style = MaterialTheme.typography.bodyLarge,
+                               )
+                           }
                         }
                         Image(
                             painter = painterResource(id = R.drawable.logovollycard),

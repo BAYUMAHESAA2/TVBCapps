@@ -7,6 +7,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.tvbc.tvbcapps.ui.theme.screen.AbsenScreen
 import com.tvbc.tvbcapps.ui.theme.screen.EditProfilScreen
+import com.tvbc.tvbcapps.ui.theme.screen.FormAbsenScreen
 import com.tvbc.tvbcapps.ui.theme.screen.KeuanganScreen
 import com.tvbc.tvbcapps.ui.theme.screen.LandingPageScreen
 import com.tvbc.tvbcapps.ui.theme.screen.MainScreen
@@ -39,6 +40,9 @@ fun SetupNavGraph(navController: NavHostController = rememberNavController()) {
         }
         composable(route = Screen.Keuangan.route) {
             KeuanganScreen(navController)
+        }
+        composable(route = Screen.FormAbsen.route) {
+            FormAbsenScreen(navController)
         }
     }
 }
