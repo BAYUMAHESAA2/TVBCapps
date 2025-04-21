@@ -88,9 +88,11 @@ fun ScreenContentKeuangan(
             Image(
                 painter = painterResource(id = R.drawable.gambarkeuangan),
                 contentDescription = "Ilustrasi Keuangan",
+                contentScale = ContentScale.Fit,
                 modifier = Modifier
-                    .size(90.dp),
-                contentScale = ContentScale.Fit
+                    .align(Alignment.Bottom)
+                    .size(120.dp)
+                    .padding(end = 1.dp, bottom = 1.dp)
             )
         }
     }
