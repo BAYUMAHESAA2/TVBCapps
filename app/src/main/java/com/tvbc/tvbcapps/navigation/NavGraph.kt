@@ -8,6 +8,7 @@ import androidx.navigation.compose.rememberNavController
 import com.tvbc.tvbcapps.ui.theme.screen.AbsenScreen
 import com.tvbc.tvbcapps.ui.theme.screen.EditProfilScreen
 import com.tvbc.tvbcapps.ui.theme.screen.KeuanganScreen
+import com.tvbc.tvbcapps.ui.theme.screen.LandingPageScreen
 import com.tvbc.tvbcapps.ui.theme.screen.MainScreen
 import com.tvbc.tvbcapps.ui.theme.screen.NotifikasiScreen
 import com.tvbc.tvbcapps.ui.theme.screen.ProfilScreen
@@ -16,8 +17,11 @@ import com.tvbc.tvbcapps.ui.theme.screen.ProfilScreen
 fun SetupNavGraph(navController: NavHostController = rememberNavController()) {
     NavHost(
         navController = navController,
-        startDestination = Screen.Home.route
+        startDestination = Screen.LandingPage.route
     ) {
+        composable(route = Screen.LandingPage.route) {
+            LandingPageScreen(navController)
+        }
         composable(route = Screen.Home.route) {
             MainScreen(navController)
         }
@@ -37,5 +41,4 @@ fun SetupNavGraph(navController: NavHostController = rememberNavController()) {
             KeuanganScreen(navController)
         }
     }
-
 }
