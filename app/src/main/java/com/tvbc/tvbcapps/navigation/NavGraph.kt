@@ -12,6 +12,7 @@ import com.tvbc.tvbcapps.ui.theme.screen.LandingPageScreen
 import com.tvbc.tvbcapps.ui.theme.screen.MainScreen
 import com.tvbc.tvbcapps.ui.theme.screen.NotifikasiScreen
 import com.tvbc.tvbcapps.ui.theme.screen.ProfilScreen
+import com.tvbc.tvbcapps.ui.theme.screen.RegisterScreen
 
 @Composable
 fun SetupNavGraph(navController: NavHostController = rememberNavController()) {
@@ -21,6 +22,9 @@ fun SetupNavGraph(navController: NavHostController = rememberNavController()) {
     ) {
         composable(route = Screen.LandingPage.route) {
             LandingPageScreen(navController)
+        }
+        composable(route = Screen.Register.route) {
+            RegisterScreen(navController)
         }
         composable(route = Screen.Home.route) {
             MainScreen(navController)
