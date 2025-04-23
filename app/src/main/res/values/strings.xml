@@ -29,4 +29,7 @@
     <string name="desember">Desember 2025</string>
     <string name="pilih_bulan">Pilih Bulan</string>
     <string name="riwayat_absen">Riwayat Absensi</string>
+
+    <!--Keuangan Screen-->
+    <string name="total_saldo">Total Saldo</string>
 </resources>
