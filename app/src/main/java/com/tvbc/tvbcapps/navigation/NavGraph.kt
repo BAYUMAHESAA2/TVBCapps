@@ -9,6 +9,7 @@ import com.tvbc.tvbcapps.ui.theme.screen.AbsenScreen
 import com.tvbc.tvbcapps.ui.theme.screen.EditProfilScreen
 import com.tvbc.tvbcapps.ui.theme.screen.KeuanganScreen
 import com.tvbc.tvbcapps.ui.theme.screen.LandingPageScreen
+import com.tvbc.tvbcapps.ui.theme.screen.LoginScreen
 import com.tvbc.tvbcapps.ui.theme.screen.MainScreen
 import com.tvbc.tvbcapps.ui.theme.screen.NotifikasiScreen
 import com.tvbc.tvbcapps.ui.theme.screen.ProfilScreen
@@ -25,6 +26,9 @@ fun SetupNavGraph(navController: NavHostController = rememberNavController()) {
         }
         composable(route = Screen.Register.route) {
             RegisterScreen(navController)
+        }
+        composable(route = Screen.Login.route) {
+            LoginScreen(navController)
         }
         composable(route = Screen.Home.route) {
             MainScreen(navController)

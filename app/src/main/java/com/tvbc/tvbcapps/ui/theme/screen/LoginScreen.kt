@@ -25,7 +25,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
@@ -56,9 +55,9 @@ import com.tvbc.tvbcapps.navigation.Screen
 import com.tvbc.tvbcapps.ui.theme.TVBCappsTheme
 
 @Composable
-fun RegisterScreen(navController: NavHostController) {
+fun LoginScreen(navController: NavHostController) {
     Scaffold { innerPadding ->
-        RegisterScreenContent(
+        LoginScreenContent(
             modifier = Modifier.padding(innerPadding),
             navController
         )
@@ -66,12 +65,10 @@ fun RegisterScreen(navController: NavHostController) {
 }
 
 @Composable
-fun RegisterScreenContent(modifier: Modifier = Modifier, navController: NavHostController) {
-    var fullName by remember { mutableStateOf("") }
+fun LoginScreenContent(modifier: Modifier = Modifier, navController: NavHostController) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
-    var confirmPassword by remember { mutableStateOf("") }
-
+    
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -80,39 +77,17 @@ fun RegisterScreenContent(modifier: Modifier = Modifier, navController: NavHostC
             .verticalScroll(rememberScrollState())
     ) {
         Image(
-            painter = painterResource(R.drawable.logoregister),
+            painter = painterResource(R.drawable.logologin),
             modifier = Modifier
                 .fillMaxWidth()
                 .height(350.dp),
-            contentDescription = "Gambar Register"
+            contentDescription = "Gambar Login"
         )
-
-        OutlinedTextField(
-            value = fullName,
-            onValueChange = { fullName = it },
-            label = { Text("Full Name") },
-            singleLine = true,
-            trailingIcon = {
-                Icon(
-                    imageVector = Icons.Filled.Person,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onBackground
-                )
-            },
-            keyboardOptions = KeyboardOptions(
-                keyboardType = KeyboardType.Text,
-                capitalization = KeyboardCapitalization.Sentences,
-                imeAction = ImeAction.Next
-            ),
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        Spacer(modifier = Modifier.height(25.dp))
 
         OutlinedTextField(
             value = email,
             onValueChange = { email = it },
-            label = { Text("Valid email") },
+            label = { Text("Enter your email") },
             singleLine = true,
             trailingIcon = {
                 Icon(
@@ -146,32 +121,26 @@ fun RegisterScreenContent(modifier: Modifier = Modifier, navController: NavHostC
             keyboardOptions = KeyboardOptions(
                 keyboardType = KeyboardType.Text,
                 capitalization = KeyboardCapitalization.Sentences,
-                imeAction = ImeAction.Next
-            ),
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        Spacer(modifier = Modifier.height(25.dp))
-
-        OutlinedTextField(
-            value = confirmPassword,
-            onValueChange = { confirmPassword = it },
-            label = { Text("Confirm Password") },
-            singleLine = true,
-            trailingIcon = {
-                Icon(
-                    imageVector = Icons.Filled.Lock,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onBackground
-                )
-            },
-            keyboardOptions = KeyboardOptions(
-                keyboardType = KeyboardType.Text,
-                capitalization = KeyboardCapitalization.Sentences,
                 imeAction = ImeAction.Done
             ),
             modifier = Modifier.fillMaxWidth()
         )
+
+        Spacer(modifier = Modifier.height(10.dp))
+
+        Box(
+            modifier = Modifier
+                .fillMaxWidth(),
+            contentAlignment = Alignment.CenterEnd
+        ) {
+            Text(
+                text = "Forget password?",
+                color = Color(0xFF660000),
+                modifier = Modifier.clickable {
+
+                }
+            )
+        }
 
         Spacer(modifier = Modifier.height(40.dp))
 
@@ -179,13 +148,13 @@ fun RegisterScreenContent(modifier: Modifier = Modifier, navController: NavHostC
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.Center
         ){
-            Text("Already a member? ")
+            Text("New member? ")
             Text(
-                text = "Log In",
+                text = "Register now",
                 color = Color(0xFF660000),
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.clickable {
-                    navController.navigate(Screen.Login.route)
+                    navController.navigate(Screen.Register.route)
                 }
             )
         }
@@ -200,9 +169,9 @@ fun RegisterScreenContent(modifier: Modifier = Modifier, navController: NavHostC
             repeat(3) { index ->
                 Box(
                     modifier = Modifier
-                        .size(width = if (index == 1) 24.dp else 17.dp, height = 8.dp)
+                        .size(width = if (index == 2) 24.dp else 17.dp, height = 8.dp)
                         .clip(RoundedCornerShape(4.dp))
-                        .background(if (index == 1) Color(0xFF000000) else Color(0xFF660000))
+                        .background(if (index == 2) Color(0xFF000000) else Color(0xFF660000))
                 )
                 Spacer(modifier = Modifier.width(3.dp))
             }
@@ -210,7 +179,7 @@ fun RegisterScreenContent(modifier: Modifier = Modifier, navController: NavHostC
             Spacer(modifier = Modifier.weight(1f))
 
             Button(
-                onClick = {navController.navigate(Screen.Login.route)},
+                onClick = {navController.navigate(Screen.Home.route)},
                 shape = CircleShape,
                 modifier = Modifier
                     .size(60.dp),
@@ -230,8 +199,8 @@ fun RegisterScreenContent(modifier: Modifier = Modifier, navController: NavHostC
 @Preview(showBackground = true)
 @Preview(uiMode = Configuration.UI_MODE_NIGHT_YES, showBackground = true)
 @Composable
-fun RegisterScreenPreview() {
+fun LoginScreenPreview() {
     TVBCappsTheme {
-        RegisterScreen(rememberNavController())
+        LoginScreen(rememberNavController())
     }
 }
