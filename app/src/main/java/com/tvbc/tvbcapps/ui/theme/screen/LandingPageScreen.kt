@@ -6,6 +6,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -14,11 +15,14 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.KeyboardArrowRight
-import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -41,36 +45,25 @@ import com.tvbc.tvbcapps.navigation.Screen
 import com.tvbc.tvbcapps.ui.theme.TVBCappsTheme
 
 @Composable
-fun LandingPageScreen(navController: NavHostController){
-    Scaffold (
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = {
-                    navController.navigate(Screen.Home.route)
-                },
-                containerColor = Color(0xFF660000),
-                shape = CircleShape
-            ) {
-                Icon(
-                    imageVector = Icons.Filled.KeyboardArrowRight,
-                    contentDescription = "Mulai",
-                    tint = Color.White
-                )
-            }
-        }
-    ){ innerPadding ->
-        LandingPageContent(modifier = Modifier.padding(innerPadding))
+fun LandingPageScreen(navController : NavHostController){
+    Scaffold{ innerPadding ->
+        LandingPageContent(
+            modifier = Modifier.padding(innerPadding),
+            navController
+        )
     }
 }
 
 @Composable
-fun LandingPageContent(modifier: Modifier = Modifier){
+fun LandingPageContent(modifier: Modifier = Modifier, navController: NavHostController){
     CurvedBackgroundLanding()
     Column (
         modifier = modifier
             .fillMaxSize()
-            .padding(top = 50.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+            .padding(top = 65.dp)
+            .padding(start = 16.dp, end = 16.dp)
+            .verticalScroll(rememberScrollState()),
+        horizontalAlignment = Alignment.CenterHorizontally,
     ){
         Image(
             painter = painterResource(R.drawable.landingpage),
@@ -80,7 +73,7 @@ fun LandingPageContent(modifier: Modifier = Modifier){
             contentDescription = "Gambar Landing Page"
         )
 
-        Spacer(modifier = Modifier.height(50.dp))
+        Spacer(modifier = Modifier.height(40.dp))
 
         Text(
             "Welcome",
@@ -99,8 +92,7 @@ fun LandingPageContent(modifier: Modifier = Modifier){
 
         Row(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(start = 25.dp, bottom = 40.dp),
+                .fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
             repeat(3) { index ->
@@ -110,7 +102,24 @@ fun LandingPageContent(modifier: Modifier = Modifier){
                         .clip(RoundedCornerShape(4.dp))
                         .background(if (index == 0) Color(0xFF000000) else Color(0xFF660000))
                 )
-                Spacer(modifier = Modifier.width(2.dp))
+                Spacer(modifier = Modifier.width(3.dp))
+            }
+
+            Spacer(modifier = Modifier.weight(1f))
+
+            Button(
+                onClick = {navController.navigate(Screen.Register.route)},
+                shape = CircleShape,
+                modifier = Modifier
+                    .size(60.dp),
+                contentPadding = PaddingValues(0.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF660000))
+            ) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                    contentDescription = null,
+                    tint = Color.White
+                )
             }
         }
     }
@@ -118,7 +127,7 @@ fun LandingPageContent(modifier: Modifier = Modifier){
 
 @Composable
 fun CurvedBackgroundLanding() {
-    val headerHeight = 455.dp
+    val headerHeight = 450.dp
     val curveHeight = 40.dp
     val density = LocalDensity.current
 

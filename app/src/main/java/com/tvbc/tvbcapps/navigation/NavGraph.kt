@@ -1,6 +1,11 @@
 package com.tvbc.tvbcapps.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -10,18 +15,43 @@ import com.tvbc.tvbcapps.ui.theme.screen.EditProfilScreen
 import com.tvbc.tvbcapps.ui.theme.screen.FormAbsenScreen
 import com.tvbc.tvbcapps.ui.theme.screen.KeuanganScreen
 import com.tvbc.tvbcapps.ui.theme.screen.LandingPageScreen
+import com.tvbc.tvbcapps.ui.theme.screen.LoginScreen
 import com.tvbc.tvbcapps.ui.theme.screen.MainScreen
 import com.tvbc.tvbcapps.ui.theme.screen.NotifikasiScreen
 import com.tvbc.tvbcapps.ui.theme.screen.ProfilScreen
+import com.tvbc.tvbcapps.ui.theme.screen.RegisterScreen
+import com.tvbc.tvbcapps.ui.theme.screen.TentangAplikasiScreen
+import com.tvbc.tvbcapps.model.AuthViewModel
 
 @Composable
-fun SetupNavGraph(navController: NavHostController = rememberNavController()) {
+fun SetupNavGraph(
+    navController: NavHostController = rememberNavController(),
+    authViewModel: AuthViewModel = viewModel()
+) {
+    // State untuk menyimpan status login
+    val isUserLoggedIn by remember { derivedStateOf { authViewModel.isUserLoggedIn() } }
+
+    // Effect untuk menavigasi ketika status login berubah
+    LaunchedEffect(isUserLoggedIn) {
+        if (isUserLoggedIn) {
+            navController.navigate(Screen.Home.route) {
+                popUpTo(Screen.LandingPage.route) { inclusive = true }
+            }
+        }
+    }
+
     NavHost(
         navController = navController,
         startDestination = Screen.LandingPage.route
     ) {
         composable(route = Screen.LandingPage.route) {
             LandingPageScreen(navController)
+        }
+        composable(route = Screen.Register.route) {
+            RegisterScreen(navController)
+        }
+        composable(route = Screen.Login.route) {
+            LoginScreen(navController)
         }
         composable(route = Screen.Home.route) {
             MainScreen(navController)
@@ -35,11 +65,14 @@ fun SetupNavGraph(navController: NavHostController = rememberNavController()) {
         composable(route = Screen.Notifikasi.route) {
             NotifikasiScreen(navController)
         }
-        composable(route =  Screen.Absen.route) {
+        composable(route = Screen.Absen.route) {
             AbsenScreen(navController)
         }
         composable(route = Screen.Keuangan.route) {
             KeuanganScreen(navController)
+        }
+        composable(route = Screen.TentangAplikasi.route) {
+            TentangAplikasiScreen(navController)
         }
         composable(route = Screen.FormAbsen.route) {
             FormAbsenScreen(navController)
