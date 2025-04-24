@@ -110,7 +110,7 @@ fun ScreenContent(modifier: Modifier = Modifier, navController: NavHostControlle
 
                            ) {
                                Text(
-                                   text = "Absen ${index + 1}",
+                                   text = "Absen",
                                    style = MaterialTheme.typography.bodyLarge,
                                )
                            }

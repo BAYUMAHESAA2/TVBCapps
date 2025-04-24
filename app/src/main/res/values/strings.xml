@@ -35,4 +35,9 @@
 
     <!--Form Absen Screen-->
     <string name="form_absen">Form Absen</string>
+    <string name="kirim">Kirim</string>
+    <string name="tanggal">Tanggal</string>
+    <string name="pilih_file">Pilih File</string>
+    <string name="buka_kamera">Buka Kamera</string>
+    <string name="atau">Atau</string>
 </resources>
