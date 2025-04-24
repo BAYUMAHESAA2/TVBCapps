@@ -151,7 +151,7 @@ fun ScreenContentProfil(modifier: Modifier = Modifier, navController: NavHostCon
             }
             Spacer(modifier = Modifier.height(15.dp))
             Button(
-                onClick = { /* aksi */ },
+                onClick = { navController.navigate(Screen.TentangAplikasi.route)},
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp)

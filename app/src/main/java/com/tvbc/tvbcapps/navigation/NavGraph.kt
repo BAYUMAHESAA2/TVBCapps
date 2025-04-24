@@ -14,6 +14,7 @@ import com.tvbc.tvbcapps.ui.theme.screen.MainScreen
 import com.tvbc.tvbcapps.ui.theme.screen.NotifikasiScreen
 import com.tvbc.tvbcapps.ui.theme.screen.ProfilScreen
 import com.tvbc.tvbcapps.ui.theme.screen.RegisterScreen
+import com.tvbc.tvbcapps.ui.theme.screen.TentangAplikasiScreen
 
 @Composable
 fun SetupNavGraph(navController: NavHostController = rememberNavController()) {
@@ -47,6 +48,9 @@ fun SetupNavGraph(navController: NavHostController = rememberNavController()) {
         }
         composable(route = Screen.Keuangan.route) {
             KeuanganScreen(navController)
+        }
+        composable(route = Screen.TentangAplikasi.route) {
+            TentangAplikasiScreen(navController)
         }
     }
 }
