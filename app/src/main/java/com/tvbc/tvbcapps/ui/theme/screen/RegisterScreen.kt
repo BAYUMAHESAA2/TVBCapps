@@ -28,15 +28,19 @@ import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -47,13 +51,17 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.tvbc.tvbcapps.R
+import com.tvbc.tvbcapps.model.AuthState
+import com.tvbc.tvbcapps.model.AuthViewModel
 import com.tvbc.tvbcapps.navigation.Screen
 import com.tvbc.tvbcapps.ui.theme.TVBCappsTheme
+import kotlinx.coroutines.launch
 
 @Composable
 fun RegisterScreen(navController: NavHostController) {
@@ -66,11 +74,39 @@ fun RegisterScreen(navController: NavHostController) {
 }
 
 @Composable
-fun RegisterScreenContent(modifier: Modifier = Modifier, navController: NavHostController) {
+fun RegisterScreenContent(
+    modifier: Modifier = Modifier,
+    navController: NavHostController,
+    viewModel: AuthViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
+) {
     var fullName by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
+    var isLoading by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+
+    val registerState by viewModel.registerState.collectAsState()
+    val scope = rememberCoroutineScope()
+
+    // Observasi state registrasi
+    LaunchedEffect(registerState) {
+        when (registerState) {
+            is AuthState.Loading -> isLoading = true
+            is AuthState.Success -> {
+                isLoading = false
+                navController.navigate(Screen.Login.route) {
+                    popUpTo(Screen.Register.route) { inclusive = true }
+                }
+                viewModel.resetStates()
+            }
+            is AuthState.Error -> {
+                isLoading = false
+                errorMessage = (registerState as AuthState.Error).message
+            }
+            else -> {}
+        }
+    }
 
     Column(
         modifier = modifier
@@ -101,7 +137,7 @@ fun RegisterScreenContent(modifier: Modifier = Modifier, navController: NavHostC
             },
             keyboardOptions = KeyboardOptions(
                 keyboardType = KeyboardType.Text,
-                capitalization = KeyboardCapitalization.Sentences,
+                capitalization = KeyboardCapitalization.Words,
                 imeAction = ImeAction.Next
             ),
             modifier = Modifier.fillMaxWidth()
@@ -122,8 +158,7 @@ fun RegisterScreenContent(modifier: Modifier = Modifier, navController: NavHostC
                 )
             },
             keyboardOptions = KeyboardOptions(
-                keyboardType = KeyboardType.Text,
-                capitalization = KeyboardCapitalization.Sentences,
+                keyboardType = KeyboardType.Email,
                 imeAction = ImeAction.Next
             ),
             modifier = Modifier.fillMaxWidth()
@@ -136,6 +171,7 @@ fun RegisterScreenContent(modifier: Modifier = Modifier, navController: NavHostC
             onValueChange = { password = it },
             label = { Text("Password") },
             singleLine = true,
+            visualTransformation = PasswordVisualTransformation(),
             trailingIcon = {
                 Icon(
                     imageVector = Icons.Filled.Lock,
@@ -144,8 +180,7 @@ fun RegisterScreenContent(modifier: Modifier = Modifier, navController: NavHostC
                 )
             },
             keyboardOptions = KeyboardOptions(
-                keyboardType = KeyboardType.Text,
-                capitalization = KeyboardCapitalization.Sentences,
+                keyboardType = KeyboardType.Password,
                 imeAction = ImeAction.Next
             ),
             modifier = Modifier.fillMaxWidth()
@@ -158,6 +193,7 @@ fun RegisterScreenContent(modifier: Modifier = Modifier, navController: NavHostC
             onValueChange = { confirmPassword = it },
             label = { Text("Confirm Password") },
             singleLine = true,
+            visualTransformation = PasswordVisualTransformation(),
             trailingIcon = {
                 Icon(
                     imageVector = Icons.Filled.Lock,
@@ -166,12 +202,21 @@ fun RegisterScreenContent(modifier: Modifier = Modifier, navController: NavHostC
                 )
             },
             keyboardOptions = KeyboardOptions(
-                keyboardType = KeyboardType.Text,
-                capitalization = KeyboardCapitalization.Sentences,
+                keyboardType = KeyboardType.Password,
                 imeAction = ImeAction.Done
             ),
             modifier = Modifier.fillMaxWidth()
         )
+
+        // Error message
+        errorMessage?.let {
+            Text(
+                text = it,
+                color = Color.Red,
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.padding(top = 16.dp)
+            )
+        }
 
         Spacer(modifier = Modifier.height(40.dp))
 
@@ -209,19 +254,35 @@ fun RegisterScreenContent(modifier: Modifier = Modifier, navController: NavHostC
 
             Spacer(modifier = Modifier.weight(1f))
 
-            Button(
-                onClick = {navController.navigate(Screen.Login.route)},
-                shape = CircleShape,
-                modifier = Modifier
-                    .size(60.dp),
-                contentPadding = PaddingValues(0.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF660000))
-            ) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                    contentDescription = null,
-                    tint = Color.White
+            if (isLoading) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(60.dp),
+                    color = Color(0xFF660000)
                 )
+            } else {
+                Button(
+                    onClick = {
+                        if (password == confirmPassword) {
+                            scope.launch {
+                                viewModel.registerUser(email, password)
+                            }
+                        } else {
+                            errorMessage = "Password tidak cocok"
+                        }
+                    },
+                    enabled = fullName.isNotEmpty() && email.isNotEmpty() &&
+                            password.isNotEmpty() && confirmPassword.isNotEmpty(),
+                    shape = CircleShape,
+                    modifier = Modifier.size(60.dp),
+                    contentPadding = PaddingValues(0.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF660000))
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                        contentDescription = null,
+                        tint = Color.White
+                    )
+                }
             }
         }
     }

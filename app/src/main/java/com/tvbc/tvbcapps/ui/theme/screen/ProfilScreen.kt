@@ -43,11 +43,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.tvbc.tvbcapps.R
 import com.tvbc.tvbcapps.component.BottomNavigationBar
 import com.tvbc.tvbcapps.component.TopBar
+import com.tvbc.tvbcapps.model.AuthViewModel
 import com.tvbc.tvbcapps.navigation.Screen
 import com.tvbc.tvbcapps.ui.theme.TVBCappsTheme
 
@@ -74,7 +76,11 @@ fun ProfilScreen(navController: NavHostController) {
 }
 
 @Composable
-fun ScreenContentProfil(modifier: Modifier = Modifier, navController: NavHostController) {
+fun ScreenContentProfil(
+    modifier: Modifier = Modifier,
+    navController: NavHostController,
+    viewModel: AuthViewModel = viewModel()
+) {
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -110,7 +116,7 @@ fun ScreenContentProfil(modifier: Modifier = Modifier, navController: NavHostCon
             Spacer(modifier = Modifier.height(30.dp))
 
             Button(
-                onClick = {navController.navigate(Screen.EditProfil.route)},
+                onClick = { navController.navigate(Screen.EditProfil.route) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp)
@@ -192,7 +198,10 @@ fun ScreenContentProfil(modifier: Modifier = Modifier, navController: NavHostCon
             }
             Spacer(modifier = Modifier.height(15.dp))
             Button(
-                onClick = { /* aksi */ },
+                onClick = {
+                    viewModel.logoutUser()
+                    navController.navigate(Screen.LandingPage.route)
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp)
@@ -203,7 +212,7 @@ fun ScreenContentProfil(modifier: Modifier = Modifier, navController: NavHostCon
                     contentColor = Color.White
                 ),
                 elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp),
-                contentPadding = PaddingValues(horizontal = 16.dp) // supaya isi button nempel ke kiri
+                contentPadding = PaddingValues(horizontal = 16.dp)
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -220,7 +229,7 @@ fun ScreenContentProfil(modifier: Modifier = Modifier, navController: NavHostCon
                     Text(
                         text = stringResource(id = R.string.keluar),
                         fontSize = 20.sp,
-                        color = Color.White // warna teks sesuai permintaan
+                        color = Color.White
                     )
                     Spacer(modifier = Modifier.weight(1f))
                     Icon(
@@ -234,6 +243,7 @@ fun ScreenContentProfil(modifier: Modifier = Modifier, navController: NavHostCon
         }
     }
 }
+
 
 @Composable
 fun CurvedBackgroundProfil() {
