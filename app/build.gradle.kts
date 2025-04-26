@@ -52,10 +52,12 @@ dependencies {
     implementation(libs.androidx.material3)
     implementation(libs.androidx.navigation.compose)
 
-    //Firebase
-    implementation(libs.firebase.auth)
-    implementation("com.google.firebase:firebase-database-ktx:21.0.0")
-    implementation("com.google.firebase:firebase-storage-ktx:20.3.0")
+    //Firebase - Perhatikan posisi BoM yang kini berada di awal
+    implementation(platform("com.google.firebase:firebase-bom:32.7.2"))
+    implementation(libs.firebase.auth) // Pastikan ini tidak memiliki versi eksplisit dalam libs.versions.toml
+    implementation("com.google.firebase:firebase-database-ktx")
+    implementation("com.google.firebase:firebase-storage-ktx")
+    implementation("com.google.firebase:firebase-firestore-ktx")
 
     //Coroutine untuk firebase task
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.3")
@@ -68,7 +70,6 @@ dependencies {
     implementation("io.coil-kt:coil-compose:2.4.0")
     implementation ("androidx.compose.material:material-icons-extended:1.7.8")
 
-
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -76,4 +77,5 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+
 }

@@ -208,7 +208,6 @@ fun RegisterScreenContent(
             modifier = Modifier.fillMaxWidth()
         )
 
-        // Error message
         errorMessage?.let {
             Text(
                 text = it,
@@ -264,7 +263,7 @@ fun RegisterScreenContent(
                     onClick = {
                         if (password == confirmPassword) {
                             scope.launch {
-                                viewModel.registerUser(email, password)
+                                viewModel.registerUser(fullName, email, password)
                             }
                         } else {
                             errorMessage = "Password tidak cocok"
