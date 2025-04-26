@@ -1,6 +1,7 @@
 package com.tvbc.tvbcapps.ui.theme.screen
 
 import android.net.Uri
+import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
@@ -46,10 +47,14 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import coil.compose.rememberAsyncImagePainter
+import com.google.firebase.auth.FirebaseAuth
 import com.tvbc.tvbcapps.R
+import com.tvbc.tvbcapps.database.Absen
+import com.tvbc.tvbcapps.model.AbsenViewModel
 import com.tvbc.tvbcapps.ui.theme.TVBCappsTheme
 import com.tvbc.tvbcapps.util.rememberCameraCaptureLauncher
 import java.util.Calendar
@@ -88,20 +93,23 @@ fun FormAbsenScreen(navController: NavHostController) {
         }
     ) { innerPadding ->
         ScreenContentAbsenForm(
-            Modifier.padding(innerPadding)
+            Modifier.padding(innerPadding), navController
         )
     }
 }
 
 @Composable
 fun ScreenContentAbsenForm(
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    navController: NavHostController
+
 ) {
     val context = LocalContext.current
     var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
     var selectedDate by remember { mutableStateOf("") }
+    val viewModel: AbsenViewModel = viewModel()
 
-    val (_,launchCamera) = rememberCameraCaptureLauncher(context) {
+    val (_, launchCamera) = rememberCameraCaptureLauncher(context) {
         selectedImageUri = it
     }
 
@@ -145,7 +153,7 @@ fun ScreenContentAbsenForm(
             label = { Text(stringResource(R.string.tanggal)) },
             trailingIcon = {
                 IconButton(
-                    onClick = {datePickerDialog.show()}
+                    onClick = { datePickerDialog.show() }
                 ) {
                     Icon(
                         Icons.Filled.CalendarToday,
@@ -157,13 +165,13 @@ fun ScreenContentAbsenForm(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        Box (
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(150.dp)
                 .border(1.dp, Color.Gray, RoundedCornerShape(12.dp)),
             contentAlignment = Alignment.Center
-        ){
+        ) {
             if (selectedImageUri != null) {
                 Image(
                     painter = rememberAsyncImagePainter(selectedImageUri),
@@ -171,10 +179,10 @@ fun ScreenContentAbsenForm(
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.Crop,
                 )
-            }else{
-                Column (
+            } else {
+                Column(
                     horizontalAlignment = Alignment.CenterHorizontally
-                ){
+                ) {
                     Icon(
                         Icons.Default.Image,
                         contentDescription = null,
@@ -207,7 +215,38 @@ fun ScreenContentAbsenForm(
 
         Button(
             onClick = {
-                // Kirim data nanti diisi logika submit
+                val currentUser = FirebaseAuth.getInstance().currentUser
+
+                if (currentUser != null) {
+                    val nama = currentUser.displayName ?: "Nama Tidak Diketahui"
+                    val nim = currentUser.email?.substringBefore("@")
+                        ?: "NIM Tidak Diketahui" // contoh ambil dari email kalau format emailnya NIM@...
+
+                    val absenData = Absen(
+                        nama = nama,
+                        nim = nim,
+                        tanggal = selectedDate,
+                        fotoUri = selectedImageUri.toString()
+                    )
+
+                    viewModel.submitAbsen(
+                        absen = absenData,
+                        onSuccess = {
+                            Toast.makeText(context, "Absen Berhasil!", Toast.LENGTH_SHORT).show()
+                            navController.popBackStack()
+                        },
+                        onError = {
+                            Toast.makeText(
+                                context,
+                                "Gagal Absen: ${it.message}",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                    )
+                } else {
+                    Toast.makeText(context, "User belum login", Toast.LENGTH_SHORT).show()
+                }
+
             },
             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF660000)),
             modifier = Modifier
