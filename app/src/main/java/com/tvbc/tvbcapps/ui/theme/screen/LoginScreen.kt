@@ -83,7 +83,9 @@ fun LoginScreenContent(
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
     val loginState by viewModel.loginState.collectAsState()
+    val userRole by viewModel.userRole.collectAsState()
     val scope = rememberCoroutineScope()
+
 
     // Observasi state login
     LaunchedEffect(loginState) {
@@ -91,8 +93,16 @@ fun LoginScreenContent(
             is AuthState.Loading -> isLoading = true
             is AuthState.Success -> {
                 isLoading = false
-                navController.navigate(Screen.Home.route) {
-                    popUpTo(Screen.Login.route) { inclusive = true }
+
+                // Navigasi berdasarkan role dari Firestore
+                if (userRole == "admin") {
+                    navController.navigate(Screen.Keuangan.route) {
+                        popUpTo(Screen.Login.route) { inclusive = true }
+                    }
+                } else {
+                    navController.navigate(Screen.Home.route) {
+                        popUpTo(Screen.Login.route) { inclusive = true }
+                    }
                 }
                 viewModel.resetStates()
             }
@@ -231,7 +241,12 @@ fun LoginScreenContent(
                 Button(
                     onClick = {
                         scope.launch {
-                            viewModel.loginUser(email, password)
+                            errorMessage = null
+                            if (email.isNotBlank() && password.isNotBlank()) {
+                                viewModel.loginUser(email, password)
+                            } else {
+                                errorMessage = "Email dan password tidak boleh kosong"
+                            }
                         }
                     },
                     enabled = email.isNotEmpty() && password.isNotEmpty(),
@@ -246,6 +261,7 @@ fun LoginScreenContent(
                         tint = Color.White
                     )
                 }
+
             }
         }
     }

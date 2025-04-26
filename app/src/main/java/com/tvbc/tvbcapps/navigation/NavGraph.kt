@@ -2,14 +2,14 @@ package com.tvbc.tvbcapps.navigation
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.tvbc.tvbcapps.model.AuthViewModel
 import com.tvbc.tvbcapps.ui.theme.screen.AbsenScreen
 import com.tvbc.tvbcapps.ui.theme.screen.EditProfilScreen
 import com.tvbc.tvbcapps.ui.theme.screen.FormAbsenScreen
@@ -21,21 +21,34 @@ import com.tvbc.tvbcapps.ui.theme.screen.NotifikasiScreen
 import com.tvbc.tvbcapps.ui.theme.screen.ProfilScreen
 import com.tvbc.tvbcapps.ui.theme.screen.RegisterScreen
 import com.tvbc.tvbcapps.ui.theme.screen.TentangAplikasiScreen
-import com.tvbc.tvbcapps.model.AuthViewModel
 
 @Composable
 fun SetupNavGraph(
     navController: NavHostController = rememberNavController(),
     authViewModel: AuthViewModel = viewModel()
 ) {
-    // State untuk menyimpan status login
-    val isUserLoggedIn by remember { derivedStateOf { authViewModel.isUserLoggedIn() } }
+    // State untuk menyimpan status login dan role
+    val isUserLoggedIn = authViewModel.isUserLoggedIn()
+    val userRole by authViewModel.userRole.collectAsState()
+    val isUserProfileLoading by authViewModel.isUserProfileLoading.collectAsState()
 
-    // Effect untuk menavigasi ketika status login berubah
-    LaunchedEffect(isUserLoggedIn) {
-        if (isUserLoggedIn) {
-            navController.navigate(Screen.Home.route) {
-                popUpTo(Screen.LandingPage.route) { inclusive = true }
+    // Perhatikan perubahannya di sini
+    LaunchedEffect(isUserLoggedIn, userRole, isUserProfileLoading) {
+        if (isUserLoggedIn && !isUserProfileLoading) {
+            when (userRole) {
+                "admin" -> {
+                    navController.navigate(Screen.Keuangan.route) {
+                        popUpTo(Screen.LandingPage.route) { inclusive = true }
+                    }
+                }
+                "user" -> {
+                    navController.navigate(Screen.Home.route) {
+                        popUpTo(Screen.LandingPage.route) { inclusive = true }
+                    }
+                }
+                else -> {
+                    // mencegah error apabila role tidak terdeteksi
+                }
             }
         }
     }

@@ -96,6 +96,10 @@ fun ScreenContentAbsen(
 
     var pilihBulan by remember { mutableStateOf(bulan[0]) }
 
+    // --- Tambahan: cek kalau null atau kosong ---
+    val namaUser = userProfile?.fullName?.takeIf { it.isNotBlank() } ?: "Nama tidak tersedia"
+    val nimUser = userProfile?.nim?.takeIf { it.isNotBlank() } ?: "NIM belum dilengkapi"
+
     Column(modifier = modifier.padding(horizontal = 16.dp)) {
         Card(
             modifier = Modifier
@@ -129,12 +133,12 @@ fun ScreenContentAbsen(
                 }
                 Column(horizontalAlignment = Alignment.End) {
                     Text(
-                        text = userProfile?.fullName ?: "Nama tidak tersedia",
+                        text = namaUser,
                         style = MaterialTheme.typography.bodyMedium,
                         color = Color.White
                     )
                     Text(
-                        text = userProfile?.nim ?: "NIM tidak tersedia",
+                        text = nimUser,
                         style = MaterialTheme.typography.bodyMedium,
                         color = Color.White
                     )
@@ -179,6 +183,7 @@ fun ScreenContentAbsen(
         RiwayatPresensiCard(hadir = 6, tidakHadir = 2)
     }
 }
+
 
 @Composable
 fun RiwayatPresensiCard(
