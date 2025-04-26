@@ -69,7 +69,6 @@ class AuthViewModel : ViewModel() {
             if (error != null) {
                 return@addSnapshotListener
             }
-
             snapshot?.let {
                 val userProfile = it.toObject(UserModel::class.java)
                 _userProfile.value = userProfile

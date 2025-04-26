@@ -98,6 +98,7 @@ fun ScreenContentProfil(
                 .padding(top = 20.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+
             Image(
                 painter = painterResource(id = R.drawable.logoprofil),
                 contentDescription = "Foto Profil",
@@ -111,7 +112,7 @@ fun ScreenContentProfil(
             Spacer(modifier = Modifier.height(12.dp))
 
             Text(
-                text = userProfile?.fullName ?: "Nama tidak tersedia", // <- Ini diganti
+                text = userProfile?.fullName ?: "Nama tidak tersedia",
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color.Black
@@ -247,7 +248,6 @@ fun ScreenContentProfil(
         }
     }
 }
-
 
 @Composable
 fun CurvedBackgroundProfil() {
