@@ -24,6 +24,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -34,11 +35,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.tvbc.tvbcapps.R
 import com.tvbc.tvbcapps.component.BottomNavigationBar
 import com.tvbc.tvbcapps.component.TopBar
+import com.tvbc.tvbcapps.model.AuthViewModel
 import com.tvbc.tvbcapps.ui.theme.TVBCappsTheme
 
 @Composable
@@ -63,8 +66,11 @@ fun AbsenScreen(navController: NavHostController) {
 @Composable
 fun ScreenContentAbsen(
     modifier: Modifier = Modifier,
-    isPreview: Boolean = false
+    isPreview: Boolean = false,
+    viewModel: AuthViewModel = viewModel()
 ) {
+    val userProfile by viewModel.userProfile.collectAsState()
+
     var expanded by remember { mutableStateOf(false) }
     val bulan = if (isPreview) {
         listOf(
@@ -89,7 +95,6 @@ fun ScreenContentAbsen(
     }
 
     var pilihBulan by remember { mutableStateOf(bulan[0]) }
-
 
     Column(modifier = modifier.padding(horizontal = 16.dp)) {
         Card(
@@ -124,12 +129,12 @@ fun ScreenContentAbsen(
                 }
                 Column(horizontalAlignment = Alignment.End) {
                     Text(
-                        text = "Bagas Aldianata",
+                        text = userProfile?.fullName ?: "Nama tidak tersedia",
                         style = MaterialTheme.typography.bodyMedium,
                         color = Color.White
                     )
                     Text(
-                        text = "607062300060",
+                        text = userProfile?.nim ?: "NIM tidak tersedia",
                         style = MaterialTheme.typography.bodyMedium,
                         color = Color.White
                     )
@@ -139,7 +144,6 @@ fun ScreenContentAbsen(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        //Dropdown untuk memilih bulan
         ExposedDropdownMenuBox(
             expanded = expanded,
             onExpandedChange = { expanded = !expanded }
@@ -175,6 +179,7 @@ fun ScreenContentAbsen(
         RiwayatPresensiCard(hadir = 6, tidakHadir = 2)
     }
 }
+
 @Composable
 fun RiwayatPresensiCard(
     hadir: Int,

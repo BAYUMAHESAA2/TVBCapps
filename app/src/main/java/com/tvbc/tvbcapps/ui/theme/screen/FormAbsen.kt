@@ -218,7 +218,7 @@ fun ScreenContentAbsenForm(
                 val currentUser = FirebaseAuth.getInstance().currentUser
 
                 if (currentUser != null) {
-                    val nama = currentUser.displayName ?: "Nama Tidak Diketahui"
+                    val nama = currentUser.email?: "Nama Tidak Diketahui"
                     val nim = currentUser.email?.substringBefore("@")
                         ?: "NIM Tidak Diketahui" // contoh ambil dari email kalau format emailnya NIM@...
 

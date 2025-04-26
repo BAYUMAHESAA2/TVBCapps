@@ -42,6 +42,7 @@ android {
 
 dependencies {
 
+    // Core dependencies
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
@@ -52,23 +53,25 @@ dependencies {
     implementation(libs.androidx.material3)
     implementation(libs.androidx.navigation.compose)
 
-    //Firebase
-    implementation(libs.firebase.auth)
-    implementation("com.google.firebase:firebase-database-ktx:21.0.0")
-    implementation("com.google.firebase:firebase-storage-ktx:20.3.0")
+    // Firebase - gunakan Firebase BOM untuk mengelola versi dengan konsisten
+    implementation(platform("com.google.firebase:firebase-bom:32.7.2"))
+    implementation("com.google.firebase:firebase-auth")
+    implementation("com.google.firebase:firebase-database-ktx")
+    implementation("com.google.firebase:firebase-storage-ktx")
+    implementation("com.google.firebase:firebase-firestore")
 
-    //Coroutine untuk firebase task
+    // Coroutine untuk firebase task
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.3")
 
-    //lifecycle
+    // lifecycle
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7")
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.8.7")
 
-    //Gambar
+    // Gambar
     implementation("io.coil-kt:coil-compose:2.4.0")
-    implementation ("androidx.compose.material:material-icons-extended:1.7.8")
+    implementation("androidx.compose.material:material-icons-extended:1.7.8")
 
-
+    // Testing
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -76,4 +79,5 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+
 }

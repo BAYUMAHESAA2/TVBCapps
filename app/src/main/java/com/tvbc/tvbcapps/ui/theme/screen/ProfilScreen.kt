@@ -30,6 +30,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -81,6 +83,8 @@ fun ScreenContentProfil(
     navController: NavHostController,
     viewModel: AuthViewModel = viewModel()
 ) {
+    val userProfile by viewModel.userProfile.collectAsState()
+
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -94,6 +98,7 @@ fun ScreenContentProfil(
                 .padding(top = 20.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+
             Image(
                 painter = painterResource(id = R.drawable.logoprofil),
                 contentDescription = "Foto Profil",
@@ -107,7 +112,7 @@ fun ScreenContentProfil(
             Spacer(modifier = Modifier.height(12.dp))
 
             Text(
-                text = "Nama Lengkap",
+                text = userProfile?.fullName ?: "Nama tidak tersedia",
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color.Black
@@ -243,7 +248,6 @@ fun ScreenContentProfil(
         }
     }
 }
-
 
 @Composable
 fun CurvedBackgroundProfil() {
