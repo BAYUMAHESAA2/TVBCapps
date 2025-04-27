@@ -134,6 +134,8 @@ fun ScreenContentAbsenForm(
         }
     }
 
+    val isFormValid = selectedImageUri != null && selectedDate.isNotEmpty()
+
     //kolom di gunakan untuk membatasi gambar dari top app bar dan agar gambar bisa central berada di tengah"
     Column(
         modifier = modifier
@@ -227,7 +229,7 @@ fun ScreenContentAbsenForm(
                 val currentUser = FirebaseAuth.getInstance().currentUser
 
                 if (currentUser != null && userProfile != null) {
-                    val nama = userProfile?.fullName ?: "Nama Tidak Diketahui"
+                    val nama = userProfile?.fullName     ?: "Nama Tidak Diketahui"
                     val nim = userProfile?.nim ?: "NIM Tidak Diketahui" // contoh ambil dari email kalau format emailnya NIM@...
 
                     val absenData = Absen(
@@ -256,6 +258,7 @@ fun ScreenContentAbsenForm(
                 }
 
             },
+            enabled = isFormValid,
             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF660000)),
             modifier = Modifier
                 .fillMaxWidth()
