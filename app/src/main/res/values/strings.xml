@@ -40,4 +40,7 @@
     <string name="pilih_file">Pilih File</string>
     <string name="buka_kamera">Buka Kamera</string>
     <string name="atau">Atau</string>
+
+    <!--Form Keuangan-->
+    <string name="form_keuangan">Form Keuangan</string>
 </resources>

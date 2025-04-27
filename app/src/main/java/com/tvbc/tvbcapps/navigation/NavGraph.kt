@@ -22,6 +22,8 @@ import com.tvbc.tvbcapps.ui.theme.screen.ProfilScreen
 import com.tvbc.tvbcapps.ui.theme.screen.RegisterScreen
 import com.tvbc.tvbcapps.ui.theme.screen.TentangAplikasiScreen
 import com.tvbc.tvbcapps.model.AuthViewModel
+import com.tvbc.tvbcapps.ui.theme.screen.DetailKeuanganScreen
+import com.tvbc.tvbcapps.ui.theme.screen.FormKeuangan
 
 @Composable
 fun SetupNavGraph(
@@ -76,6 +78,12 @@ fun SetupNavGraph(
         }
         composable(route = Screen.FormAbsen.route) {
             FormAbsenScreen(navController)
+        }
+        composable(route = Screen.DetailKeuangan.route) {
+            DetailKeuanganScreen(navController)
+        }
+        composable(route = Screen.FormKeuangan.route) {
+            FormKeuangan(navController)
         }
     }
 }
