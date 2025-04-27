@@ -26,6 +26,12 @@ class AuthViewModel : ViewModel() {
     private val _isProfileUpdating = MutableStateFlow(false)
     val isProfileUpdating: StateFlow<Boolean> = _isProfileUpdating.asStateFlow()
 
+    private val _userRole = MutableStateFlow("user")
+    val userRole: StateFlow<String> = _userRole.asStateFlow()
+
+    private val _isUserProfileLoading = MutableStateFlow(true)
+    val isUserProfileLoading: StateFlow<Boolean> = _isUserProfileLoading.asStateFlow()
+
     init {
         auth.currentUser?.let { fetchUserProfile(it.uid) }
     }
@@ -40,7 +46,8 @@ class AuthViewModel : ViewModel() {
                     val newUser = UserModel(
                         uid = user.uid,
                         fullName = fullName,
-                        email = email
+                        email = email,
+                        role = "user" // Pastikan semua user baru memiliki role "user"
                     )
                     usersCollection.document(user.uid).set(newUser).await()
                 } catch (firestoreError: Exception) {
@@ -57,7 +64,28 @@ class AuthViewModel : ViewModel() {
         try {
             _loginState.value = AuthState.Loading
             val result = auth.signInWithEmailAndPassword(email, password).await()
-            result.user?.let { fetchUserProfile(it.uid) }
+
+            result.user?.let { user ->
+                // Ambil informasi user dari Firestore, termasuk role-nya
+                val userDoc = usersCollection.document(user.uid).get().await()
+
+                if (userDoc.exists()) {
+                    val userProfile = userDoc.toObject(UserModel::class.java)
+                    _userProfile.value = userProfile
+                    _userRole.value = userProfile?.role ?: "user"
+                } else {
+                    // Jika dokumen tidak ada di Firestore, buat dengan role default "user"
+                    val defaultUser = UserModel(
+                        uid = user.uid,
+                        email = email,
+                        role = "user"
+                    )
+                    usersCollection.document(user.uid).set(defaultUser).await()
+                    _userProfile.value = defaultUser
+                    _userRole.value = "user"
+                }
+            }
+
             _loginState.value = AuthState.Success
         } catch (e: Exception) {
             _loginState.value = AuthState.Error(e.message ?: "Authentication failed")
@@ -65,13 +93,17 @@ class AuthViewModel : ViewModel() {
     }
 
     private fun fetchUserProfile(userId: String) {
+        _isUserProfileLoading.value = true
         usersCollection.document(userId).addSnapshotListener { snapshot, error ->
             if (error != null) {
+                _isUserProfileLoading.value = false
                 return@addSnapshotListener
             }
             snapshot?.let {
                 val userProfile = it.toObject(UserModel::class.java)
                 _userProfile.value = userProfile
+                _userRole.value = userProfile?.role ?: "user"
+                _isUserProfileLoading.value = false
             }
         }
     }
@@ -96,7 +128,6 @@ class AuthViewModel : ViewModel() {
 
     fun resetStates() {
         _loginState.value = AuthState.Idle
-        _registerState.value = AuthState.Idle
     }
 
     fun isUserLoggedIn(): Boolean {

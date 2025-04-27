@@ -96,6 +96,10 @@ fun ScreenContentAbsen(
 
     var pilihBulan by remember { mutableStateOf(bulan[0]) }
 
+    // --- Tambahan: cek kalau null atau kosong ---
+    val namaUser = userProfile?.fullName?.takeIf { it.isNotBlank() } ?: "Nama tidak tersedia"
+    val nimUser = userProfile?.nim?.takeIf { it.isNotBlank() } ?: "NIM belum dilengkapi"
+
     Column(modifier = modifier.padding(horizontal = 16.dp)) {
         Card(
             modifier = Modifier
@@ -105,7 +109,7 @@ fun ScreenContentAbsen(
             shape = MaterialTheme.shapes.large,
             elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
             colors = CardDefaults.cardColors(
-                containerColor = Color(0xFF4A0000)
+                containerColor = Color(0xFF660000)
             )
         ) {
             Row(
@@ -129,12 +133,12 @@ fun ScreenContentAbsen(
                 }
                 Column(horizontalAlignment = Alignment.End) {
                     Text(
-                        text = userProfile?.fullName ?: "Nama tidak tersedia",
+                        text = namaUser,
                         style = MaterialTheme.typography.bodyMedium,
                         color = Color.White
                     )
                     Text(
-                        text = userProfile?.nim ?: "NIM tidak tersedia",
+                        text = nimUser,
                         style = MaterialTheme.typography.bodyMedium,
                         color = Color.White
                     )
@@ -180,6 +184,7 @@ fun ScreenContentAbsen(
     }
 }
 
+
 @Composable
 fun RiwayatPresensiCard(
     hadir: Int,
@@ -213,7 +218,7 @@ fun RiwayatPresensiCard(
                     modifier = Modifier
                         .width(1.dp)
                         .height(40.dp)
-                        .background(Color(0xFF4A0000))
+                        .background(Color(0xFF660000))
                 )
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text("Tidak Hadir", style = MaterialTheme.typography.bodyMedium, color = Color.Black)
