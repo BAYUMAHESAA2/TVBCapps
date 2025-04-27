@@ -59,7 +59,11 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7")
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.8.7")
     implementation("io.coil-kt:coil-compose:2.4.0")
-    implementation("androidx.compose.material:material-icons-extended:<version>") // Perlu tambahkan versi yang spesifik
+    implementation("androidx.compose.material:material-icons-extended:1.6.1")
+
+    implementation("com.cloudinary:cloudinary-android:2.3.1")
+    implementation("com.cloudinary:cloudinary-core:1.33.0")
+    implementation("id.zelory:compressor:3.0.1")
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

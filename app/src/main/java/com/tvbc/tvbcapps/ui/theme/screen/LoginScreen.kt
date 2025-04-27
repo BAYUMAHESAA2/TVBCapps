@@ -86,7 +86,6 @@ fun LoginScreenContent(
     val userRole by viewModel.userRole.collectAsState()
     val scope = rememberCoroutineScope()
 
-
     // Observasi state login
     LaunchedEffect(loginState) {
         when (loginState) {

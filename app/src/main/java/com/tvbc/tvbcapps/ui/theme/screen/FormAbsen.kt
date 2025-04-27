@@ -1,8 +1,11 @@
 package com.tvbc.tvbcapps.ui.theme.screen
 
 import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -21,6 +24,7 @@ import androidx.compose.material.icons.filled.Image
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -46,13 +50,16 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import coil.compose.rememberAsyncImagePainter
 import com.tvbc.tvbcapps.R
+import com.tvbc.tvbcapps.model.AbsenViewModel
 import com.tvbc.tvbcapps.ui.theme.TVBCappsTheme
 import com.tvbc.tvbcapps.util.rememberCameraCaptureLauncher
 import java.util.Calendar
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -95,14 +102,65 @@ fun FormAbsenScreen(navController: NavHostController) {
 
 @Composable
 fun ScreenContentAbsenForm(
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    viewModel: AbsenViewModel = viewModel()
 ) {
     val context = LocalContext.current
     var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
     var selectedDate by remember { mutableStateOf("") }
+    var isUploading by remember { mutableStateOf(false) }
+    var uploadStatus by remember { mutableStateOf("") }
 
-    val (_,launchCamera) = rememberCameraCaptureLauncher(context) {
+    // Permission handling
+    val permissionsToRequest = remember {
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+            arrayOf(android.Manifest.permission.CAMERA, android.Manifest.permission.READ_MEDIA_IMAGES)
+        } else {
+            arrayOf(android.Manifest.permission.CAMERA, android.Manifest.permission.READ_EXTERNAL_STORAGE)
+        }
+    }
+
+    val permissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissions ->
+        val allGranted = permissions.all { it.value }
+        if (allGranted) {
+            // Permissions granted, proceed with action
+            uploadStatus = ""
+        } else {
+            uploadStatus = "Izin diperlukan untuk menggunakan fitur ini"
+        }
+    }
+
+    // Add image picker launcher
+    val imagePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        uri?.let {
+            selectedImageUri = it
+        }
+    }
+
+    val (_, launchCamera) = rememberCameraCaptureLauncher(context) {
         selectedImageUri = it
+    }
+
+    // Function to check permissions and launch image picker
+    fun launchImagePicker() {
+        permissionLauncher.launch(
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+                arrayOf(android.Manifest.permission.READ_MEDIA_IMAGES)
+            } else {
+                arrayOf(android.Manifest.permission.READ_EXTERNAL_STORAGE)
+            }
+        )
+        imagePickerLauncher.launch("image/*")
+    }
+
+    // Function to check permissions and launch camera
+    fun checkPermissionsAndLaunchCamera() {
+        permissionLauncher.launch(permissionsToRequest)
+        launchCamera()
     }
 
     val calendar = Calendar.getInstance()
@@ -120,12 +178,27 @@ fun ScreenContentAbsenForm(
         }
     }
 
-    //kolom di gunakan untuk membatasi gambar dari top app bar dan agar gambar bisa central berada di tengah"
+    // Fungsi untuk upload ke Cloudinary
+    fun uploadImageToCloudinary() {
+        if (selectedImageUri == null || selectedDate.isEmpty()) {
+            uploadStatus = "Pilih tanggal dan gambar terlebih dahulu"
+            return
+        }
+
+        isUploading = true
+        uploadStatus = "Mengunggah..."
+
+        // Proses upload ke Cloudinary dengan viewModel
+        viewModel.uploadImage(context, selectedImageUri!!, selectedDate) { success, message ->
+            isUploading = false
+            uploadStatus = if (success) "Berhasil diunggah!" else "Gagal: $message"
+        }
+    }
+
     Column(
         modifier = modifier
             .fillMaxSize()
             .padding(start = 16.dp, end = 16.dp),
-
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         // Gambar form
@@ -133,7 +206,7 @@ fun ScreenContentAbsenForm(
             painter = painterResource(id = R.drawable.formabsen),
             contentDescription = "Ilustrasi Absen",
             modifier = Modifier
-                .size(325.dp) // Sesuai gambar
+                .size(325.dp)
                 .padding(vertical = 16.dp)
         )
 
@@ -145,7 +218,7 @@ fun ScreenContentAbsenForm(
             label = { Text(stringResource(R.string.tanggal)) },
             trailingIcon = {
                 IconButton(
-                    onClick = {datePickerDialog.show()}
+                    onClick = { datePickerDialog.show() }
                 ) {
                     Icon(
                         Icons.Filled.CalendarToday,
@@ -157,13 +230,16 @@ fun ScreenContentAbsenForm(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        Box (
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(150.dp)
-                .border(1.dp, Color.Gray, RoundedCornerShape(12.dp)),
+                .border(1.dp, Color.Gray, RoundedCornerShape(12.dp))
+                .clickable(
+                    onClick = { launchImagePicker() }
+                ), // Apply clickable modifier here
             contentAlignment = Alignment.Center
-        ){
+        ) {
             if (selectedImageUri != null) {
                 Image(
                     painter = rememberAsyncImagePainter(selectedImageUri),
@@ -171,10 +247,10 @@ fun ScreenContentAbsenForm(
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.Crop,
                 )
-            }else{
-                Column (
+            } else {
+                Column(
                     horizontalAlignment = Alignment.CenterHorizontally
-                ){
+                ) {
                     Icon(
                         Icons.Default.Image,
                         contentDescription = null,
@@ -189,9 +265,7 @@ fun ScreenContentAbsenForm(
         Text(stringResource(R.string.atau))
 
         Button(
-            onClick = {
-                launchCamera()
-            },
+            onClick = { checkPermissionsAndLaunchCamera() },
             colors = ButtonDefaults.buttonColors(containerColor = Color.Gray),
             modifier = Modifier
                 .fillMaxWidth()
@@ -205,21 +279,35 @@ fun ScreenContentAbsenForm(
             Text(stringResource(R.string.buka_kamera))
         }
 
+        // Tampilkan status upload jika ada
+        if (uploadStatus.isNotEmpty()) {
+            Text(
+                text = uploadStatus,
+                color = if (uploadStatus.startsWith("Berhasil")) Color.Green else Color.Red,
+                modifier = Modifier.padding(vertical = 8.dp)
+            )
+        }
+
         Button(
-            onClick = {
-                // Kirim data nanti diisi logika submit
-            },
+            onClick = { uploadImageToCloudinary() },
             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF660000)),
             modifier = Modifier
                 .fillMaxWidth()
                 .height(48.dp),
-            shape = RoundedCornerShape(8.dp)
+            shape = RoundedCornerShape(8.dp),
+            enabled = !isUploading && selectedImageUri != null && selectedDate.isNotEmpty()
         ) {
-            Text(stringResource(R.string.kirim), color = Color.White, fontWeight = FontWeight.Bold)
+            if (isUploading) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(24.dp),
+                    color = Color.White
+                )
+            } else {
+                Text(stringResource(R.string.kirim), color = Color.White, fontWeight = FontWeight.Bold)
+            }
         }
     }
 }
-
 
 @Preview(showBackground = true)
 @Composable
