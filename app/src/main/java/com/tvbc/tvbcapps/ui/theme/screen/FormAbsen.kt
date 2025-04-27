@@ -31,6 +31,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -56,6 +57,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.tvbc.tvbcapps.R
 import com.tvbc.tvbcapps.database.Absen
 import com.tvbc.tvbcapps.model.AbsenViewModel
+import com.tvbc.tvbcapps.model.AuthViewModel
 import com.tvbc.tvbcapps.ui.theme.TVBCappsTheme
 import com.tvbc.tvbcapps.util.rememberCameraCaptureLauncher
 import java.util.Calendar
@@ -109,6 +111,9 @@ fun ScreenContentAbsenForm(
     var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
     var selectedDate by remember { mutableStateOf("") }
     val viewModel: AbsenViewModel = viewModel()
+    val authViewModel: AuthViewModel = viewModel()
+
+    val userProfile by authViewModel.userProfile.collectAsState()
 
     val (_, launchCamera) = rememberCameraCaptureLauncher(context) {
         selectedImageUri = it
@@ -221,10 +226,9 @@ fun ScreenContentAbsenForm(
             onClick = {
                 val currentUser = FirebaseAuth.getInstance().currentUser
 
-                if (currentUser != null) {
-                    val nama = currentUser.email?: "Nama Tidak Diketahui"
-                    val nim = currentUser.email?.substringBefore("@")
-                        ?: "NIM Tidak Diketahui" // contoh ambil dari email kalau format emailnya NIM@...
+                if (currentUser != null && userProfile != null) {
+                    val nama = userProfile?.fullName ?: "Nama Tidak Diketahui"
+                    val nim = userProfile?.nim ?: "NIM Tidak Diketahui" // contoh ambil dari email kalau format emailnya NIM@...
 
                     val absenData = Absen(
                         nama = nama,
@@ -248,7 +252,7 @@ fun ScreenContentAbsenForm(
                         }
                     )
                 } else {
-                    Toast.makeText(context, "User belum login", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, "User belum login atau data profile kosong", Toast.LENGTH_SHORT).show()
                 }
 
             },

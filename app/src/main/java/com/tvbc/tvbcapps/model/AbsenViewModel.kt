@@ -4,7 +4,7 @@ import androidx.lifecycle.ViewModel
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
 import com.tvbc.tvbcapps.database.Absen
-import java.lang.Error
+
 
 class AbsenViewModel : ViewModel() {
     private val database = FirebaseDatabase.getInstance().reference
@@ -20,6 +20,7 @@ class AbsenViewModel : ViewModel() {
         if (currentUser != null) {
             val userId = currentUser.uid
             database.child("absensi").child(userId)
+                .push()
                 .setValue(absen)
                 .addOnSuccessListener { onSuccess() }
                 .addOnFailureListener { onError(it) }
