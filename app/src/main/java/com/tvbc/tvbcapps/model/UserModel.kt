@@ -7,5 +7,6 @@ data class UserModel(
     val nim: String = "",
     val jurusan: String = "",
     val angkatan: String = "",
-    val role: String = "user"
+    val role: String = "user",
+    val profileImageUrl: String = ""
 )

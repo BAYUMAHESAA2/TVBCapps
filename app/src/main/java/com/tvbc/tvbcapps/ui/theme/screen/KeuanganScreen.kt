@@ -24,24 +24,27 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.tvbc.tvbcapps.R
 import com.tvbc.tvbcapps.component.BottomNavigationBar
 import com.tvbc.tvbcapps.component.CurvedBackground
 import com.tvbc.tvbcapps.component.TopBar
+import com.tvbc.tvbcapps.model.AuthViewModel
 import com.tvbc.tvbcapps.ui.theme.TVBCappsTheme
 
 
 @Composable
 fun KeuanganScreen(navController: NavHostController) {
+    val viewModel: AuthViewModel = viewModel()
     Scaffold(
         containerColor = Color.Transparent,
         topBar = {
             TopBar(navController)
         },
         bottomBar = {
-            BottomNavigationBar(navController)
+            BottomNavigationBar(navController, viewModel)
         }
     ) { innerPadding ->
         ScreenContentKeuangan(

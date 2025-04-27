@@ -46,13 +46,14 @@ import com.tvbc.tvbcapps.ui.theme.TVBCappsTheme
 
 @Composable
 fun AbsenScreen(navController: NavHostController) {
+    val viewModel: AuthViewModel = viewModel()
     Scaffold(
         containerColor = Color.Transparent,
         topBar = {
             TopBar(navController)
         },
         bottomBar = {
-            BottomNavigationBar(navController)
+            BottomNavigationBar(navController, viewModel)
         }
     ) { innerPadding ->
             ScreenContentAbsen(

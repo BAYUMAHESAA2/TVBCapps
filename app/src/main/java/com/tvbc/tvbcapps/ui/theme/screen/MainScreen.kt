@@ -31,24 +31,27 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.tvbc.tvbcapps.R
 import com.tvbc.tvbcapps.component.BottomNavigationBar
 import com.tvbc.tvbcapps.component.CurvedBackground
 import com.tvbc.tvbcapps.component.TopBar
+import com.tvbc.tvbcapps.model.AuthViewModel
 import com.tvbc.tvbcapps.navigation.Screen
 import com.tvbc.tvbcapps.ui.theme.TVBCappsTheme
 
 @Composable
 fun MainScreen(navController: NavHostController) {
+    val viewModel: AuthViewModel = viewModel()
     Scaffold(
         containerColor = Color.Transparent,
         topBar = {
             TopBar(navController)
         },
         bottomBar = {
-            BottomNavigationBar(navController)
+            BottomNavigationBar(navController, viewModel)
         }
     ) { innerPadding ->
         ScreenContent(
@@ -97,23 +100,23 @@ fun ScreenContent(modifier: Modifier = Modifier, navController: NavHostControlle
                                 color = Color.Black
                             )
                             Spacer(modifier = Modifier.height(80.dp))
-                           Button(
-                               onClick = {
-                                   navController.navigate(Screen.FormAbsen.route)
-                               },
-                               colors = ButtonDefaults.buttonColors(
-                                   containerColor = Color(0xFF660000), // Warna marun sesuai gambar
-                                   contentColor = Color.White // Warna teks putih
-                               ),
+                            Button(
+                                onClick = {
+                                    navController.navigate(Screen.FormAbsen.route)
+                                },
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = Color(0xFF660000), // Warna marun sesuai gambar
+                                    contentColor = Color.White // Warna teks putih
+                                ),
 
-                               shape = RoundedCornerShape(8.dp),
+                                shape = RoundedCornerShape(8.dp),
 
-                           ) {
-                               Text(
-                                   text = "Absen",
-                                   style = MaterialTheme.typography.bodyLarge,
-                               )
-                           }
+                                ) {
+                                Text(
+                                    text = "Absen",
+                                    style = MaterialTheme.typography.bodyLarge,
+                                )
+                            }
                         }
                         Image(
                             painter = painterResource(id = R.drawable.logovollycard),

@@ -44,4 +44,3 @@ fun rememberCameraCaptureLauncher(
 
     return Pair(photoUri, launchCamera)
 }
-

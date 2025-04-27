@@ -8,6 +8,15 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.tasks.await
+import android.content.Context
+import android.net.Uri
+import androidx.lifecycle.viewModelScope
+import com.cloudinary.android.MediaManager
+import com.cloudinary.android.callback.ErrorInfo
+import com.cloudinary.android.callback.UploadCallback
+import com.tvbc.tvbcapps.util.FileUtilProfil
+import id.zelory.compressor.Compressor
+import kotlinx.coroutines.launch
 
 class AuthViewModel : ViewModel() {
     private val auth = FirebaseAuth.getInstance()
@@ -47,11 +56,14 @@ class AuthViewModel : ViewModel() {
                         uid = user.uid,
                         fullName = fullName,
                         email = email,
-                        role = "user" // Pastikan semua user baru memiliki role "user"
+                        role = "user" // Default role for new users
                     )
                     usersCollection.document(user.uid).set(newUser).await()
                 } catch (firestoreError: Exception) {
-                    Log.e("AuthViewModel", "Firestore profile creation failed: ${firestoreError.message}")
+                    Log.e(
+                        "AuthViewModel",
+                        "Firestore profile creation failed: ${firestoreError.message}"
+                    )
                 }
             }
             _registerState.value = AuthState.Success
@@ -66,7 +78,7 @@ class AuthViewModel : ViewModel() {
             val result = auth.signInWithEmailAndPassword(email, password).await()
 
             result.user?.let { user ->
-                // Ambil informasi user dari Firestore, termasuk role-nya
+                // Fetch user info from Firestore
                 val userDoc = usersCollection.document(user.uid).get().await()
 
                 if (userDoc.exists()) {
@@ -74,7 +86,7 @@ class AuthViewModel : ViewModel() {
                     _userProfile.value = userProfile
                     _userRole.value = userProfile?.role ?: "user"
                 } else {
-                    // Jika dokumen tidak ada di Firestore, buat dengan role default "user"
+                    // Create a default user profile if it doesn't exist
                     val defaultUser = UserModel(
                         uid = user.uid,
                         email = email,
@@ -108,7 +120,12 @@ class AuthViewModel : ViewModel() {
         }
     }
 
-    suspend fun updateUserProfile(fullName: String, nim: String, jurusan: String, angkatan: String) {
+    suspend fun updateUserProfile(
+        fullName: String,
+        nim: String,
+        jurusan: String,
+        angkatan: String
+    ) {
         val currentUser = auth.currentUser ?: return
         _isProfileUpdating.value = true
 
@@ -137,9 +154,79 @@ class AuthViewModel : ViewModel() {
     fun logoutUser() {
         auth.signOut()
     }
+
+    fun uploadProfileImage(context: Context, imageUri: Uri, callback: (Boolean, String) -> Unit) {
+        val file = FileUtilProfil.getFileFromUriProfil(context, imageUri)
+        if (file == null) {
+            callback(false, "Tidak dapat mengakses file")
+            return
+        }
+
+        val userId = auth.currentUser?.uid
+        if (userId == null) {
+            callback(false, "User tidak terautentikasi")
+            return
+        }
+
+        viewModelScope.launch {
+            val compressedFile = try {
+                Compressor.compress(context, file)
+            } catch (e: Exception) {
+                callback(false, "Gagal mengompresi gambar: ${e.message}")
+                return@launch
+            }
+
+            val timestamp = System.currentTimeMillis()
+
+            MediaManager.get().upload(compressedFile.absolutePath)
+                .unsigned("fotoProfil")
+                .option("folder", "folder/fotoProfil")
+                .option("public_id", "profile_${userId}_$timestamp")
+                .callback(object : UploadCallback {
+                    override fun onStart(requestId: String) {}
+
+                    override fun onProgress(requestId: String, bytes: Long, totalBytes: Long) {}
+
+                    override fun onSuccess(requestId: String, resultData: Map<*, *>) {
+                        val imageUrl = resultData["url"] as? String ?: ""
+                        updateProfileImageInFirestore(imageUrl) { success, message ->
+                            callback(success, message)
+                        }
+                    }
+
+                    override fun onError(requestId: String, error: ErrorInfo) {
+                        callback(false, "Upload error: ${error.description}")
+                    }
+
+                    override fun onReschedule(requestId: String, error: ErrorInfo) {}
+                })
+                .dispatch()
+        }
+    }
+
+    private fun updateProfileImageInFirestore(
+        imageUrl: String,
+        callback: (Boolean, String) -> Unit
+    ) {
+        val userId = auth.currentUser?.uid
+        if (userId == null) {
+            callback(false, "User tidak terautentikasi")
+            return
+        }
+
+        firestore.collection("users").document(userId)
+            .update("profileImageUrl", imageUrl)
+            .addOnSuccessListener {
+                fetchUserProfile(userId) // ✅ Tambahkan ini supaya data userProfile di-update ulang
+                callback(true, "Foto profil berhasil diperbarui")
+            }
+            .addOnFailureListener { e ->
+                callback(false, "Gagal memperbarui foto profil: ${e.message}")
+            }
+    }
 }
 
-sealed class AuthState {
+    sealed class AuthState {
     object Idle : AuthState()
     object Loading : AuthState()
     object Success : AuthState()
