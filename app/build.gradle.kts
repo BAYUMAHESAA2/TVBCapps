@@ -59,6 +59,7 @@ dependencies {
     implementation("com.google.firebase:firebase-database-ktx")
     implementation("com.google.firebase:firebase-storage-ktx")
     implementation("com.google.firebase:firebase-firestore")
+    implementation ("com.google.accompanist:accompanist-permissions:0.32.0")
 
 
     // Coroutine untuk firebase task

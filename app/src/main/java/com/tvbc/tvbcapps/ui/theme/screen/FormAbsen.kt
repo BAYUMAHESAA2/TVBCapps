@@ -2,6 +2,8 @@ package com.tvbc.tvbcapps.ui.theme.screen
 
 import android.net.Uri
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -53,6 +55,9 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import coil.compose.rememberAsyncImagePainter
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.isGranted
+import com.google.accompanist.permissions.rememberPermissionState
 import com.google.firebase.auth.FirebaseAuth
 import com.tvbc.tvbcapps.R
 import com.tvbc.tvbcapps.database.Absen
@@ -101,6 +106,7 @@ fun FormAbsenScreen(navController: NavHostController) {
     }
 }
 
+@OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun ScreenContentAbsenForm(
     modifier: Modifier = Modifier,
@@ -115,9 +121,19 @@ fun ScreenContentAbsenForm(
 
     val userProfile by authViewModel.userProfile.collectAsState()
 
+    val cameraPermissionState = rememberPermissionState(android.Manifest.permission.CAMERA)
+    val gallerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        if (uri != null){
+            selectedImageUri = uri
+        }
+    }
+
     val (_, launchCamera) = rememberCameraCaptureLauncher(context) {
         selectedImageUri = it
     }
+
 
     val calendar = Calendar.getInstance()
     val datePickerDialog = remember {
@@ -179,7 +195,8 @@ fun ScreenContentAbsenForm(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(150.dp)
-                .border(1.dp, Color.Gray, RoundedCornerShape(12.dp)),
+                .border(1.dp, Color.Gray, RoundedCornerShape(12.dp))
+                .clickable { gallerLauncher.launch("image/*") },
             contentAlignment = Alignment.Center
         ){
             if (selectedImageUri != null) {
@@ -208,7 +225,11 @@ fun ScreenContentAbsenForm(
 
         Button(
             onClick = {
-                launchCamera()
+                if (cameraPermissionState.status.isGranted) {
+                    launchCamera()
+                } else {
+                    cameraPermissionState.launchPermissionRequest()
+                }
             },
             colors = ButtonDefaults.buttonColors(containerColor = Color.Gray),
             modifier = Modifier
