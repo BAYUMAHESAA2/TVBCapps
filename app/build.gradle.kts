@@ -60,6 +60,7 @@ dependencies {
     implementation("com.google.firebase:firebase-storage-ktx")
     implementation("com.google.firebase:firebase-firestore")
 
+
     // Coroutine untuk firebase task
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.3")
 
@@ -69,7 +70,7 @@ dependencies {
 
     // Gambar
     implementation("io.coil-kt:coil-compose:2.4.0")
-    implementation("androidx.compose.material:material-icons-extended:1.7.8")
+    implementation ("androidx.compose.material:material-icons-extended:1.7.8")
 
     // Testing
     testImplementation(libs.junit)
@@ -79,5 +80,4 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
-
 }
