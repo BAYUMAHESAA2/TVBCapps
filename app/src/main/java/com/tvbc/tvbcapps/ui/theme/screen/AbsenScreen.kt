@@ -110,7 +110,7 @@ fun ScreenContentAbsen(
             shape = MaterialTheme.shapes.large,
             elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
             colors = CardDefaults.cardColors(
-                containerColor = Color(0xFF4A0000)
+                containerColor = Color(0xFF660000)
             )
         ) {
             Row(
@@ -219,7 +219,7 @@ fun RiwayatPresensiCard(
                     modifier = Modifier
                         .width(1.dp)
                         .height(40.dp)
-                        .background(Color(0xFF4A0000))
+                        .background(Color(0xFF660000))
                 )
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text("Tidak Hadir", style = MaterialTheme.typography.bodyMedium, color = Color.Black)
