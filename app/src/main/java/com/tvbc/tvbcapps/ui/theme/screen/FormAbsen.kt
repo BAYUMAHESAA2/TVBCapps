@@ -34,6 +34,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -150,7 +151,11 @@ fun ScreenContentAbsenForm(
         }
     }
 
-    val isFormValid = selectedImageUri != null && selectedDate.isNotEmpty()
+    val isFormValid by remember(selectedImageUri, selectedDate) {
+        derivedStateOf {
+            selectedImageUri != null && selectedDate.isNotEmpty()
+        }
+    }
 
     //kolom di gunakan untuk membatasi gambar dari top app bar dan agar gambar bisa central berada di tengah"
     Column(
@@ -250,8 +255,8 @@ fun ScreenContentAbsenForm(
                 val currentUser = FirebaseAuth.getInstance().currentUser
 
                 if (currentUser != null && userProfile != null) {
-                    val nama = userProfile?.fullName     ?: "Nama Tidak Diketahui"
-                    val nim = userProfile?.nim ?: "NIM Tidak Diketahui" // contoh ambil dari email kalau format emailnya NIM@...
+                    val nama = userProfile?.fullName?: "Nama Tidak Diketahui"
+                    val nim = userProfile?.nim?: "NIM Tidak Diketahui"
 
                     val absenData = Absen(
                         nama = nama,
