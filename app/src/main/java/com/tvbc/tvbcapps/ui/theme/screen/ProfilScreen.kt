@@ -117,118 +117,6 @@ fun ScreenContentProfil(
     viewModel: AuthViewModel
 ) {
     val userProfile by viewModel.userProfile.collectAsState()
-    val context = LocalContext.current
-    var showChangePictureDialog by remember { mutableStateOf(false) }
-
-    // Permission and image handling states
-    var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
-    var isUploading by remember { mutableStateOf(false) }
-    var uploadStatus by remember { mutableStateOf("") }
-
-    // Permission handling
-    val permissionsToRequest = remember {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            arrayOf(Manifest.permission.CAMERA, Manifest.permission.READ_MEDIA_IMAGES)
-        } else {
-            arrayOf(Manifest.permission.CAMERA, Manifest.permission.READ_EXTERNAL_STORAGE)
-        }
-    }
-
-    val permissionLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestMultiplePermissions()
-    ) { permissions ->
-        val allGranted = permissions.all { it.value }
-        if (!allGranted) {
-            uploadStatus = "Izin diperlukan untuk menggunakan fitur ini"
-        }
-    }
-
-    // Image picker launcher
-    val imagePickerLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent()
-    ) { uri: Uri? ->
-        uri?.let {
-            selectedImageUri = it
-            isUploading = true
-            viewModel.uploadProfileImage(context, it) { success, message ->
-                isUploading = false
-                uploadStatus = if (success) "Berhasil diperbarui!" else "Gagal: $message"
-            }
-        }
-    }
-
-    // Camera launcher
-    val cameraLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.TakePicture()
-    ) { success ->
-        if (success) {
-            selectedImageUri?.let { uri ->
-                isUploading = true
-                viewModel.uploadProfileImage(context, uri) { success, message ->
-                    isUploading = false
-                    uploadStatus = if (success) "Berhasil diperbarui!" else "Gagal: $message"
-                }
-            }
-        }
-    }
-
-    // Function to launch image picker
-    fun launchImagePicker() {
-        permissionLauncher.launch(
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                arrayOf(Manifest.permission.READ_MEDIA_IMAGES)
-            } else {
-                arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE)
-            }
-        )
-        imagePickerLauncher.launch("image/*")
-    }
-
-    // Function to launch camera
-    fun launchCamera() {
-        permissionLauncher.launch(permissionsToRequest)
-        val file = File.createTempFile(
-            "profile_${System.currentTimeMillis()}",
-            ".jpg",
-            context.externalCacheDir
-        )
-        selectedImageUri = FileProvider.getUriForFile(
-            context,
-            "${context.packageName}.provider",
-            file
-        )
-        selectedImageUri?.let { uri ->
-            cameraLauncher.launch(uri)
-        } ?: run {
-            // Handle case ketika uri null
-            uploadStatus = "Gagal: URI gambar tidak valid"
-        }
-    }
-
-    // Profile picture change dialog
-    if (showChangePictureDialog) {
-        AlertDialog(
-            onDismissRequest = { showChangePictureDialog = false },
-            title = { Text("Ubah Foto Profil") },
-            text = { Text("Pilih sumber foto") },
-            confirmButton = {
-                TextButton(onClick = {
-                    showChangePictureDialog = false
-                    launchImagePicker()
-                }) {
-                    Text("Galeri")
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = {
-                    showChangePictureDialog = false
-                    launchCamera()
-                }) {
-                    Text("Kamera")
-                }
-            }
-        )
-    }
 
     Box(
         modifier = modifier
@@ -243,14 +131,13 @@ fun ScreenContentProfil(
                 .padding(top = 20.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Profile Image Section
+            // Profile Image Section (now just display, no edit functionality)
             Box {
                 Box(
                     modifier = Modifier
                         .size(180.dp)
                         .clip(CircleShape)
                         .border(4.dp, Color.White, CircleShape)
-                        .clickable { showChangePictureDialog = true }
                 ) {
                     if (userProfile?.profileImageUrl?.isNotEmpty() == true) {
                         val safeUrl = userProfile?.profileImageUrl?.replace("http://", "https://")
@@ -270,45 +157,10 @@ fun ScreenContentProfil(
                             modifier = Modifier.fillMaxSize()
                         )
                     }
-
-                    // Edit icon
-                    Box(
-                        modifier = Modifier
-                            .align(Alignment.BottomEnd)
-                            .size(40.dp)
-                            .background(Color(0xFF660000), CircleShape)
-                            .padding(8.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Edit,
-                            contentDescription = "Ubah Foto",
-                            tint = Color.White,
-                            modifier = Modifier.align(Alignment.Center)
-                        )
-                    }
-                }
-
-                if (isUploading) {
-                    CircularProgressIndicator(
-                        modifier = Modifier
-                            .size(180.dp)
-                            .align(Alignment.Center),
-                        color = Color(0xFF660000),
-                        strokeWidth = 4.dp
-                    )
                 }
             }
 
-            // Upload status message
-            if (uploadStatus.isNotEmpty()) {
-                Text(
-                    text = uploadStatus,
-                    color = if (uploadStatus.startsWith("Berhasil")) Color.Green else Color.Red,
-                    modifier = Modifier.padding(vertical = 4.dp)
-                )
-            } else {
-                Spacer(modifier = Modifier.height(12.dp))
-            }
+            Spacer(modifier = Modifier.height(12.dp))
 
             // User name
             Text(
@@ -356,6 +208,7 @@ fun ScreenContentProfil(
         }
     }
 }
+
 
 @Composable
 fun ProfileActionButton(

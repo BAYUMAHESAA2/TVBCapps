@@ -95,7 +95,7 @@ fun LoginScreenContent(
 
                 // Navigasi berdasarkan role dari Firestore
                 if (userRole == "admin") {
-                    navController.navigate(Screen.Keuangan.route) {
+                    navController.navigate(Screen.AdminHomeScreen.route) {
                         popUpTo(Screen.Login.route) { inclusive = true }
                     }
                 } else {

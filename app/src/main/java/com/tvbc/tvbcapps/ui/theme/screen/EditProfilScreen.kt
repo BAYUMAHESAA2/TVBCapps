@@ -1,8 +1,14 @@
 package com.tvbc.tvbcapps.ui.theme.screen
 
+import android.Manifest
+import android.net.Uri
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -17,6 +23,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
@@ -26,6 +34,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBarDefaults
@@ -42,6 +51,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -52,6 +62,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
+import coil.compose.AsyncImage
 import com.tvbc.tvbcapps.R
 import com.tvbc.tvbcapps.component.CurvedBackground
 import com.tvbc.tvbcapps.model.AuthViewModel
@@ -103,16 +114,76 @@ fun ScreenContentEditProfil(
     viewModel: AuthViewModel = viewModel(),
     navController: NavHostController
 ) {
-
     val userProfile by viewModel.userProfile.collectAsState()
     val isUpdating by viewModel.isProfileUpdating.collectAsState()
     val scope = rememberCoroutineScope()
+    val context = LocalContext.current
 
-    // State untuk data profil
+    // State for profile data
     var fullName by remember { mutableStateOf("") }
     var nim by remember { mutableStateOf("") }
     var jurusan by remember { mutableStateOf("") }
     var angkatan by remember { mutableStateOf("") }
+
+    // Photo upload states (moved from ProfileScreen)
+    var showChangePictureDialog by remember { mutableStateOf(false) }
+    var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
+    var isUploading by remember { mutableStateOf(false) }
+    var uploadStatus by remember { mutableStateOf("") }
+
+
+    val permissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissions ->
+        val allGranted = permissions.all { it.value }
+        if (!allGranted) {
+            uploadStatus = "Izin diperlukan untuk menggunakan fitur ini"
+        }
+    }
+
+    // Image picker launcher
+    val imagePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        uri?.let {
+            selectedImageUri = it
+            isUploading = true
+            viewModel.uploadProfileImage(context, it) { success, message ->
+                isUploading = false
+                uploadStatus = if (success) "Berhasil diperbarui!" else "Gagal: $message"
+            }
+        }
+    }
+
+
+    // Function to launch image picker
+    fun launchImagePicker() {
+        permissionLauncher.launch(
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                arrayOf(Manifest.permission.READ_MEDIA_IMAGES)
+            } else {
+                arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE)
+            }
+        )
+        imagePickerLauncher.launch("image/*")
+    }
+
+    // Profile picture change dialog
+    if (showChangePictureDialog) {
+        AlertDialog(
+            onDismissRequest = { showChangePictureDialog = false },
+            title = { Text("Ubah Foto Profil") },
+            text = { Text("Pilih sumber foto") },
+            confirmButton = {
+                TextButton(onClick = {
+                    showChangePictureDialog = false
+                    launchImagePicker()
+                }) {
+                    Text("Galeri")
+                }
+            }
+        )
+    }
 
     LaunchedEffect(userProfile) {
         userProfile?.let {
@@ -139,19 +210,76 @@ fun ScreenContentEditProfil(
         ) {
             Spacer(modifier = Modifier.height(40.dp))
 
-            Image(
-                painter = painterResource(id = R.drawable.logoprofil),
-                contentDescription = "Foto Profil",
-                contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .size(180.dp)
-                    .clip(CircleShape)
-                    .border(4.dp, Color.White, CircleShape)
-            )
+            // Profile Image Section with edit capability
+            Box {
+                Box(
+                    modifier = Modifier
+                        .size(180.dp)
+                        .clip(CircleShape)
+                        .border(4.dp, Color.White, CircleShape)
+                        .clickable { showChangePictureDialog = true }
+                ) {
+                    if (userProfile?.profileImageUrl?.isNotEmpty() == true) {
+                        val safeUrl = userProfile?.profileImageUrl?.replace("http://", "https://")
+                        AsyncImage(
+                            model = safeUrl,
+                            contentDescription = "Foto Profil",
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier.fillMaxSize(),
+                            error = painterResource(id = R.drawable.logoprofil),
+                            placeholder = painterResource(id = R.drawable.logoprofil)
+                        )
+                    } else {
+                        Image(
+                            painter = painterResource(id = R.drawable.logoprofil),
+                            contentDescription = "Foto Profil",
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier.fillMaxSize()
+                        )
+                    }
 
-            Spacer(modifier = Modifier.height(30.dp))
+                    // Edit icon
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.BottomEnd)
+                            .size(40.dp)
+                            .background(Color(0xFF660000), CircleShape)
+                            .padding(8.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Edit,
+                            contentDescription = "Ubah Foto",
+                            tint = Color.White,
+                            modifier = Modifier.align(Alignment.Center)
+                        )
+                    }
+                }
 
-            // Nama lengkap (now editable)
+                if (isUploading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier
+                            .size(180.dp)
+                            .align(Alignment.Center),
+                        color = Color(0xFF660000),
+                        strokeWidth = 4.dp
+                    )
+                }
+            }
+
+            // Upload status message
+            if (uploadStatus.isNotEmpty()) {
+                Text(
+                    text = uploadStatus,
+                    color = if (uploadStatus.startsWith("Berhasil")) Color.Green else Color.Red,
+                    modifier = Modifier.padding(vertical = 4.dp)
+                )
+            } else {
+                Spacer(modifier = Modifier.height(16.dp))
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Form fields
             EditableTextField(
                 value = fullName,
                 onValueChange = { fullName = it },
@@ -159,7 +287,6 @@ fun ScreenContentEditProfil(
             )
             Spacer(modifier = Modifier.height(16.dp))
 
-            // NIM
             EditableTextField(
                 value = nim,
                 onValueChange = { nim = it },
@@ -167,7 +294,6 @@ fun ScreenContentEditProfil(
             )
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Jurusan
             EditableTextField(
                 value = jurusan,
                 onValueChange = { jurusan = it },
@@ -175,7 +301,6 @@ fun ScreenContentEditProfil(
             )
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Angkatan
             EditableTextField(
                 value = angkatan,
                 onValueChange = { angkatan = it },

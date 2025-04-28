@@ -41,10 +41,17 @@ class AuthViewModel : ViewModel() {
     private val _isUserProfileLoading = MutableStateFlow(true)
     val isUserProfileLoading: StateFlow<Boolean> = _isUserProfileLoading.asStateFlow()
 
+    private val _allUsers = MutableStateFlow<List<UserModel>>(emptyList())
+    val allUsers: StateFlow<List<UserModel>> = _allUsers.asStateFlow()
+
+    private val _isLoadingAllUsers = MutableStateFlow(true)
+    val isLoadingAllUsers: StateFlow<Boolean> = _isLoadingAllUsers.asStateFlow()
+
     init {
         auth.currentUser?.let { fetchUserProfile(it.uid) }
     }
 
+    //Menangani Register
     suspend fun registerUser(fullName: String, email: String, password: String) {
         try {
             _registerState.value = AuthState.Loading
@@ -72,6 +79,7 @@ class AuthViewModel : ViewModel() {
         }
     }
 
+    //Menangani Login
     suspend fun loginUser(email: String, password: String) {
         try {
             _loginState.value = AuthState.Loading
@@ -104,6 +112,7 @@ class AuthViewModel : ViewModel() {
         }
     }
 
+    //Menangani ketika mengisi data di edit profil
     private fun fetchUserProfile(userId: String) {
         _isUserProfileLoading.value = true
         usersCollection.document(userId).addSnapshotListener { snapshot, error ->
@@ -143,18 +152,30 @@ class AuthViewModel : ViewModel() {
         }
     }
 
-    fun resetStates() {
-        _loginState.value = AuthState.Idle
+    //Mengambil seluruh data user di firestore dengan role user
+    fun fetchAllUsers() {
+        _isLoadingAllUsers.value = true
+
+        usersCollection
+            .whereEqualTo("role", "user")
+            .get()
+            .addOnSuccessListener { querySnapshot ->
+                val usersList = mutableListOf<UserModel>()
+                for (document in querySnapshot.documents) {
+                    val user = document.toObject(UserModel::class.java)
+                    user?.let { usersList.add(it) }
+                }
+                _allUsers.value = usersList
+                _isLoadingAllUsers.value = false
+                Log.d("AuthViewModel", "Berhasil mengambil ${usersList.size} user")
+            }
+            .addOnFailureListener { exception ->
+                Log.e("AuthViewModel", "Error mengambil data user: ${exception.message}")
+                _isLoadingAllUsers.value = false
+            }
     }
 
-    fun isUserLoggedIn(): Boolean {
-        return auth.currentUser != null
-    }
-
-    fun logoutUser() {
-        auth.signOut()
-    }
-
+    //Upload gambar ke cloud
     fun uploadProfileImage(context: Context, imageUri: Uri, callback: (Boolean, String) -> Unit) {
         val file = FileUtilProfil.getFileFromUriProfil(context, imageUri)
         if (file == null) {
@@ -204,6 +225,7 @@ class AuthViewModel : ViewModel() {
         }
     }
 
+    //Menghubungkan data cloud ke firestore
     private fun updateProfileImageInFirestore(
         imageUrl: String,
         callback: (Boolean, String) -> Unit
@@ -224,9 +246,21 @@ class AuthViewModel : ViewModel() {
                 callback(false, "Gagal memperbarui foto profil: ${e.message}")
             }
     }
+
+    fun resetStates() {
+        _loginState.value = AuthState.Idle
+    }
+
+    fun isUserLoggedIn(): Boolean {
+        return auth.currentUser != null
+    }
+
+    fun logoutUser() {
+        auth.signOut()
+    }
 }
 
-    sealed class AuthState {
+sealed class AuthState {
     object Idle : AuthState()
     object Loading : AuthState()
     object Success : AuthState()

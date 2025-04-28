@@ -11,6 +11,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.tvbc.tvbcapps.model.AuthViewModel
 import com.tvbc.tvbcapps.ui.theme.screen.AbsenScreen
+import com.tvbc.tvbcapps.ui.theme.screen.AdminHomeScreen
 import com.tvbc.tvbcapps.ui.theme.screen.EditProfilScreen
 import com.tvbc.tvbcapps.ui.theme.screen.FormAbsenScreen
 import com.tvbc.tvbcapps.ui.theme.screen.KeuanganScreen
@@ -39,7 +40,7 @@ fun SetupNavGraph(
         if (isUserLoggedIn && !isUserProfileLoading) {
             when (userRole) {
                 "admin" -> {
-                    navController.navigate(Screen.Keuangan.route) {
+                    navController.navigate(Screen.AdminHomeScreen.route) {
                         popUpTo(Screen.LandingPage.route) { inclusive = true }
                     }
                 }
@@ -97,6 +98,9 @@ fun SetupNavGraph(
         }
         composable(route = Screen.FormKeuangan.route) {
             FormKeuangan(navController)
+        }
+        composable(route = Screen.AdminHomeScreen.route) {
+            AdminHomeScreen(navController)
         }
     }
 }
