@@ -55,7 +55,6 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import coil.compose.rememberAsyncImagePainter
 import com.tvbc.tvbcapps.R
-import com.tvbc.tvbcapps.model.AbsenViewModel
 import com.tvbc.tvbcapps.ui.theme.TVBCappsTheme
 import com.tvbc.tvbcapps.util.rememberCameraCaptureLauncher
 import java.util.Calendar
