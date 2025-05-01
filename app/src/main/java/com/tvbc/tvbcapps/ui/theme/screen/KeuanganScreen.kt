@@ -31,7 +31,6 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
@@ -170,7 +169,6 @@ fun ScreenContentKeuangan(modifier: Modifier = Modifier, navController: NavHostC
 
 @Composable
 fun CardKeuangan(viewModel: KeuanganViewModel = viewModel()) {
-    // Observe the totalSaldo LiveData
     val totalSaldo by viewModel.totalSaldo.observeAsState("0")
     val isLoading by viewModel.isLoading.observeAsState(false)
 
@@ -179,39 +177,29 @@ fun CardKeuangan(viewModel: KeuanganViewModel = viewModel()) {
             .fillMaxWidth()
             .height(120.dp),
         shape = MaterialTheme.shapes.large,
-        colors = CardDefaults.cardColors(
-            containerColor = Color.White
-        ),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
         elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxSize()
-        ) {
-
-            // Teks
+        Row(modifier = Modifier.fillMaxSize()) {
             Column(
                 modifier = Modifier
                     .weight(1f)
-                    .padding(start = 16.dp, top = 16.dp, bottom = 16.dp),
+                    .padding(start = 16.dp, top = 16.dp, bottom = 16.dp)
             ) {
-                // Teks Total Saldo
                 Row {
                     Canvas(
                         modifier = Modifier
                             .size(height = 37.dp, width = 4.dp)
                             .padding(top = 2.dp)
                     ) {
-                        drawRect(
-                            color = Color(0xFF660000)
-                        )
+                        drawRect(color = Color(0xFF660000))
                     }
 
                     Spacer(modifier = Modifier.width(6.dp))
 
                     Column {
                         Text(
-                            "Total Saldo",
+                            text = "Total Saldo",
                             style = MaterialTheme.typography.headlineLarge
                         )
 
@@ -225,11 +213,10 @@ fun CardKeuangan(viewModel: KeuanganViewModel = viewModel()) {
                             )
                         } else {
                             Text(
-                                "Rp${totalSaldo},00",
+                                text = "Rp $totalSaldo",
                                 style = MaterialTheme.typography.titleMedium,
                                 color = Color(0xFFFF8B1E),
-                                modifier = Modifier
-                                    .padding(start = 5.dp)
+                                modifier = Modifier.padding(start = 5.dp)
                             )
                         }
                     }
@@ -245,9 +232,6 @@ fun CardKeuangan(viewModel: KeuanganViewModel = viewModel()) {
                     .alpha(0.7f)
             )
         }
-    }
-    LaunchedEffect(Unit) {
-        viewModel.calculateTotalSaldo()
     }
 }
 

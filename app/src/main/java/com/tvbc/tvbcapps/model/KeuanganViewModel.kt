@@ -6,15 +6,15 @@ import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.cloudinary.android.MediaManager
 import com.cloudinary.android.callback.ErrorInfo
 import com.cloudinary.android.callback.UploadCallback
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
-import id.zelory.compressor.Compressor
 import com.tvbc.tvbcapps.util.FileUtil
-import androidx.lifecycle.viewModelScope
+import id.zelory.compressor.Compressor
 import kotlinx.coroutines.launch
 import java.text.DecimalFormat
 import java.text.SimpleDateFormat
@@ -23,15 +23,13 @@ import java.util.Locale
 
 class KeuanganViewModel : ViewModel() {
     // LiveData untuk total saldo
-    private val _totalSaldo = MutableLiveData<String>("0")
+    private val _totalSaldo = MutableLiveData<String>()
     val totalSaldo: LiveData<String> = _totalSaldo
 
-    // LiveData untuk status loading
-    private val _isLoading = MutableLiveData<Boolean>(false)
+    private val _isLoading = MutableLiveData<Boolean>()
     val isLoading: LiveData<Boolean> = _isLoading
 
     init {
-        // Load total saldo when ViewModel is created
         calculateTotalSaldo()
     }
 
@@ -42,14 +40,12 @@ class KeuanganViewModel : ViewModel() {
             return
         }
 
-        // Get user data first
         getUserFullName { fullName ->
             if (fullName.isEmpty()) {
                 callback(false, "Gagal mendapatkan nama pengguna")
                 return@getUserFullName
             }
 
-            // Compress and upload image asynchronously
             viewModelScope.launch {
                 val compressedFile = try {
                     Compressor.compress(context, file)
@@ -58,15 +54,13 @@ class KeuanganViewModel : ViewModel() {
                     return@launch
                 }
 
-                // Replace spaces with underscores for filename
                 val safeFullName = fullName.replace(" ", "_").lowercase()
                 val timestamp = System.currentTimeMillis()
                 val currentDate = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(Date())
 
-                // Upload to Cloudinary with filename based on fullName
                 MediaManager.get().upload(compressedFile.absolutePath)
-                    .unsigned("keuangan") // Use the same preset or create a new one for finance
-                    .option("folder", "folder/keuangan") // Changed folder to keuangan
+                    .unsigned("keuangan")
+                    .option("folder", "folder/keuangan")
                     .option("public_id", "${safeFullName}_${currentDate.replace("/", "_")}_$timestamp")
                     .callback(object : UploadCallback {
                         override fun onStart(requestId: String) {}
@@ -95,27 +89,22 @@ class KeuanganViewModel : ViewModel() {
         }
     }
 
-    // Function to calculate total saldo from all keuangan documents
     fun calculateTotalSaldo() {
         _isLoading.value = true
 
-        FirebaseFirestore.getInstance().collection("keuangan")
+        FirebaseFirestore.getInstance()
+            .collection("keuangan")
             .get()
-            .addOnSuccessListener { documents ->
+            .addOnSuccessListener { result ->
                 var total = 0L
 
-                for (document in documents) {
-                    // Parse nominal as Long (assuming it's stored as String)
-                    val nominalStr = document.getString("nominal") ?: "0"
-                    try {
-                        // Remove any non-numeric characters (like spaces, commas, etc.)
-                        val cleanNominal = nominalStr.replace(Regex("[^0-9]"), "")
-                        if (cleanNominal.isNotEmpty()) {
-                            total += cleanNominal.toLong()
-                        }
-                    } catch (e: Exception) {
-                        Log.e("KeuanganViewModel", "Error parsing nominal: ${e.message}")
+                for (document in result) {
+                    // Ensure we're specifically looking for the nominal field as a number
+                    val nominal = when {
+                        document.contains("nominal") -> document.getLong("nominal") ?: 0L
+                        else -> 0L
                     }
+                    total += nominal
                 }
 
                 // Format the total with thousand separators
@@ -124,8 +113,8 @@ class KeuanganViewModel : ViewModel() {
                 _isLoading.value = false
             }
             .addOnFailureListener { e ->
-                Log.e("KeuanganViewModel", "Error getting documents: ${e.message}")
-                _totalSaldo.value = "Error"
+                Log.e("KeuanganViewModel", "Error calculating total: ${e.message}")
+                _totalSaldo.value = "0"
                 _isLoading.value = false
             }
     }
@@ -158,30 +147,32 @@ class KeuanganViewModel : ViewModel() {
         date: String,
         callback: (Boolean, String) -> Unit
     ) {
-        // Get user ID from Firebase Auth
         val userId = FirebaseAuth.getInstance().currentUser?.uid
         if (userId == null) {
             callback(false, "User tidak terautentikasi")
             return
         }
 
-        // Get user data from Firestore
         FirebaseFirestore.getInstance().collection("users").document(userId)
             .get()
             .addOnSuccessListener { document ->
                 if (document != null && document.exists()) {
                     val userModel = document.toObject(UserModel::class.java)
 
-                    // Check if userModel is not null and add data to keuanganData
                     if (userModel != null) {
-                        // Clean up the nominal value (remove non-numeric characters)
-                        val cleanNominal = nominal.replace(Regex("[^0-9]"), "")
+                        val cleanNominalStr = nominal.replace(Regex("[^0-9]"), "")
+                        val nominalLong = cleanNominalStr.toLongOrNull()
+
+                        if (nominalLong == null || nominalLong <= 0L) {
+                            callback(false, "Nominal tidak valid")
+                            return@addOnSuccessListener
+                        }
 
                         val keuanganData = hashMapOf(
                             "userId" to userId,
                             "imageUrl" to imageUrl,
                             "date" to date,
-                            "nominal" to cleanNominal,  // Store clean numeric value
+                            "nominal" to nominalLong,  // simpan sebagai angka
                             "timestamp" to FieldValue.serverTimestamp(),
                             "fullName" to userModel.fullName,
                             "nim" to userModel.nim,
@@ -189,7 +180,6 @@ class KeuanganViewModel : ViewModel() {
                             "angkatan" to userModel.angkatan
                         )
 
-                        // Save to Firestore in keuangan collection
                         FirebaseFirestore.getInstance().collection("keuangan")
                             .add(keuanganData)
                             .addOnSuccessListener {

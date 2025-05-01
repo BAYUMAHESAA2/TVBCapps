@@ -113,7 +113,7 @@ fun ScreenContentFormKeuangan(
     var isUploading by remember { mutableStateOf(false) }
     var uploadStatus by remember { mutableStateOf("") }
 
-    // Permission handling
+        // Permission handling
     val permissionsToRequest = remember {
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
             arrayOf(android.Manifest.permission.CAMERA, android.Manifest.permission.READ_MEDIA_IMAGES)
@@ -199,7 +199,12 @@ fun ScreenContentFormKeuangan(
 
         OutlinedTextField(
             value = nominal,
-            onValueChange = { nominal = it },
+            onValueChange = { input ->
+                // Hanya izinkan angka
+                if (input.all { it.isDigit() }) {
+                    nominal = input
+                }
+            },
             label = { Text("Masukkan nominal") },
             singleLine = true,
             trailingIcon = {
