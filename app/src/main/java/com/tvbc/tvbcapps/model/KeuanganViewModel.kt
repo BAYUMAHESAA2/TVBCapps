@@ -13,6 +13,7 @@ import com.cloudinary.android.callback.UploadCallback
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.Query
 import com.tvbc.tvbcapps.util.FileUtil
 import id.zelory.compressor.Compressor
 import kotlinx.coroutines.launch
@@ -20,6 +21,7 @@ import java.text.DecimalFormat
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import com.google.firebase.Timestamp
 
 class KeuanganViewModel : ViewModel() {
     // LiveData untuk total saldo
@@ -32,6 +34,9 @@ class KeuanganViewModel : ViewModel() {
     // LiveData untuk status operasi
     private val _operationStatus = MutableLiveData<Pair<Boolean, String>>()
     val operationStatus: LiveData<Pair<Boolean, String>> = _operationStatus
+
+    private val _listKeuangan = MutableLiveData<List<Map<String, Any>>>()
+    val listKeuangan: LiveData<List<Map<String, Any>>> = _listKeuangan
 
     init {
         calculateTotalSaldo()
@@ -269,4 +274,38 @@ class KeuanganViewModel : ViewModel() {
                 callback(false, "Gagal mengambil data pengguna: ${e.message}")
             }
     }
+
+    fun fetchAllKeuangan() {
+        _isLoading.value = true
+        FirebaseFirestore.getInstance()
+            .collection("keuangan")
+            .orderBy("timestamp", Query.Direction.DESCENDING)
+            .get()
+            .addOnSuccessListener { result ->
+                val dataList = result.documents.mapNotNull { document ->
+                    document.data?.toMutableMap()?.apply {
+                        // Konversi timestamp ke format yang bisa difilter
+                        val timestamp = this["timestamp"] as? Timestamp
+                        timestamp?.let {
+                            val date = it.toDate()
+                            val dateFormat = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+                            val timeFormat = SimpleDateFormat("HH:mm:ss", Locale.getDefault())
+
+                            this["date"] = dateFormat.format(date) // Format: 01/05/2025
+                            this["time"] = timeFormat.format(date) // Format: 19:19:56
+                            this["month"] = date.month + 1 // Bulan dalam angka (1-12)
+                            this["year"] = date.year + 1900 // Tahun lengkap
+                        }
+                    }
+                }
+                _listKeuangan.value = dataList
+                _isLoading.value = false
+            }
+            .addOnFailureListener { e ->
+                Log.e("KeuanganViewModel", "Error fetching data: ${e.message}")
+                _listKeuangan.value = emptyList()
+                _isLoading.value = false
+            }
+    }
+
 }
