@@ -24,6 +24,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -41,6 +42,7 @@ import androidx.navigation.compose.rememberNavController
 import com.tvbc.tvbcapps.R
 import com.tvbc.tvbcapps.component.BottomNavigationBar
 import com.tvbc.tvbcapps.component.TopBar
+import com.tvbc.tvbcapps.model.AbsenViewModel
 import com.tvbc.tvbcapps.model.AuthViewModel
 import com.tvbc.tvbcapps.ui.theme.TVBCappsTheme
 
@@ -79,9 +81,16 @@ fun AbsenScreen(navController: NavHostController, authViewModel: AuthViewModel =
 fun ScreenContentAbsen(
     modifier: Modifier = Modifier,
     isPreview: Boolean = false,
-    viewModel: AuthViewModel = viewModel()
+    authViewModel: AuthViewModel = viewModel(),
+    absenViewModel: AbsenViewModel = viewModel()
 ) {
-    val userProfile by viewModel.userProfile.collectAsState()
+    val userProfile by authViewModel.userProfile.collectAsState()
+    val jumlahHadir by absenViewModel.jumlahHadir.collectAsState()
+    val jumlahTidakHadir by absenViewModel.jumlahTidakHadir.collectAsState()
+
+    LaunchedEffect(Unit) {
+        absenViewModel.loadJumlahHadir()
+    }
 
     var expanded by remember { mutableStateOf(false) }
     val bulan = if (isPreview) {
@@ -192,10 +201,9 @@ fun ScreenContentAbsen(
                 }
             }
         }
-        RiwayatPresensiCard(hadir = 6, tidakHadir = 2)
+        RiwayatPresensiCard(hadir = jumlahHadir, tidakHadir = jumlahTidakHadir)
     }
 }
-
 
 @Composable
 fun RiwayatPresensiCard(
