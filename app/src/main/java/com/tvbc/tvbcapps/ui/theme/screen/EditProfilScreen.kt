@@ -112,8 +112,13 @@ fun EditProfilScreen(navController: NavHostController) {
 fun ScreenContentEditProfil(
     modifier: Modifier = Modifier,
     viewModel: AuthViewModel = viewModel(),
-    navController: NavHostController
+    navController: NavHostController,
+    authViewModel: AuthViewModel = viewModel()
 ) {
+    val isUserLoggedIn = authViewModel.isUserLoggedIn()
+    val userRole by authViewModel.userRole.collectAsState()
+    val isUserProfileLoading by authViewModel.isUserProfileLoading.collectAsState()
+
     val userProfile by viewModel.userProfile.collectAsState()
     val isUpdating by viewModel.isProfileUpdating.collectAsState()
     val scope = rememberCoroutineScope()
@@ -279,34 +284,48 @@ fun ScreenContentEditProfil(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Form fields
-            EditableTextField(
-                value = fullName,
-                onValueChange = { fullName = it },
-                hint = "Nama Lengkap"
-            )
-            Spacer(modifier = Modifier.height(16.dp))
+            if (isUserLoggedIn && !isUserProfileLoading) {
+                when (userRole) {
+                    "admin" -> {
+                        EditableTextField(
+                            value = fullName,
+                            onValueChange = { fullName = it },
+                            hint = "Nama Lengkap"
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                    }
+                    "user" -> {
+                        // Form fields
+                        EditableTextField(
+                            value = fullName,
+                            onValueChange = { fullName = it },
+                            hint = "Nama Lengkap"
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
 
-            EditableTextField(
-                value = nim,
-                onValueChange = { nim = it },
-                hint = "NIM"
-            )
-            Spacer(modifier = Modifier.height(16.dp))
+                        EditableTextField(
+                            value = nim,
+                            onValueChange = { nim = it },
+                            hint = "NIM"
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
 
-            EditableTextField(
-                value = jurusan,
-                onValueChange = { jurusan = it },
-                hint = "Jurusan"
-            )
-            Spacer(modifier = Modifier.height(16.dp))
+                        EditableTextField(
+                            value = jurusan,
+                            onValueChange = { jurusan = it },
+                            hint = "Jurusan"
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
 
-            EditableTextField(
-                value = angkatan,
-                onValueChange = { angkatan = it },
-                hint = "Angkatan"
-            )
-            Spacer(modifier = Modifier.height(32.dp))
+                        EditableTextField(
+                            value = angkatan,
+                            onValueChange = { angkatan = it },
+                            hint = "Angkatan"
+                        )
+                        Spacer(modifier = Modifier.height(32.dp))
+                    }
+                }
+            }
 
             Button(
                 onClick = {
