@@ -191,69 +191,110 @@ fun ScreenContentKeuangan(modifier: Modifier = Modifier, navController: NavHostC
 }
 
 @Composable
-fun CardKeuangan(viewModel: KeuanganViewModel = viewModel()) {
+fun CardKeuangan(viewModel: KeuanganViewModel = viewModel(), selectedMonth: Int? = null) {
     val totalSaldo by viewModel.totalSaldo.observeAsState("0")
+    val totalPemasukan by viewModel.totalPemasukan.observeAsState("0")
+    val totalPengeluaran by viewModel.totalPengeluaran.observeAsState("0")
     val isLoading by viewModel.isLoading.observeAsState(false)
+
+    LaunchedEffect(selectedMonth) {
+        viewModel.setMonthFilter(selectedMonth)
+    }
 
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .height(120.dp),
+            .height(180.dp), // Tinggi ditambah untuk menampung informasi tambahan
         shape = MaterialTheme.shapes.large,
         colors = CardDefaults.cardColors(containerColor = Color.White),
         elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
     ) {
-        Row(modifier = Modifier.fillMaxSize()) {
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(start = 16.dp, top = 16.dp, bottom = 16.dp)
-            ) {
-                Row {
-                    Canvas(
-                        modifier = Modifier
-                            .size(height = 37.dp, width = 4.dp)
-                            .padding(top = 2.dp)
-                    ) {
-                        drawRect(color = Color(0xFF660000))
-                    }
+        Column(modifier = Modifier.fillMaxSize()) {
+            Row(modifier = Modifier.weight(1f)) {
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(start = 16.dp, top = 16.dp, bottom = 8.dp)
+                ) {
+                    Row {
+                        Canvas(
+                            modifier = Modifier
+                                .size(height = 37.dp, width = 4.dp)
+                                .padding(top = 2.dp)
+                        ) {
+                            drawRect(color = Color(0xFF660000))
+                        }
 
-                    Spacer(modifier = Modifier.width(6.dp))
+                        Spacer(modifier = Modifier.width(6.dp))
 
-                    Column {
-                        Text(
-                            text = "Total Saldo",
-                            style = MaterialTheme.typography.headlineLarge
-                        )
-
-                        if (isLoading) {
-                            CircularProgressIndicator(
-                                modifier = Modifier
-                                    .padding(start = 5.dp)
-                                    .size(24.dp),
-                                color = Color(0xFFFF8B1E),
-                                strokeWidth = 2.dp
-                            )
-                        } else {
+                        Column {
                             Text(
-                                text = "Rp $totalSaldo",
-                                style = MaterialTheme.typography.titleMedium,
-                                color = Color(0xFFFF8B1E),
-                                modifier = Modifier.padding(start = 5.dp)
+                                text = "Total Saldo",
+                                style = MaterialTheme.typography.headlineLarge
                             )
+
+                            if (isLoading) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier
+                                        .padding(16.dp)
+                                        .align(Alignment.CenterHorizontally),
+                                    color = Color(0xFFFF8B1E)
+                                )
+                            } else {
+                                Text(
+                                    text = "Rp $totalSaldo",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    color = Color(0xFFFF8B1E),
+                                    modifier = Modifier.padding(start = 5.dp)
+                                )
+                            }
                         }
                     }
                 }
-            }
 
-            Image(
-                painter = painterResource(R.drawable.gambarkeuangan),
-                contentDescription = null,
+                Image(
+                    painter = painterResource(R.drawable.gambarkeuangan),
+                    contentDescription = null,
+                    modifier = Modifier
+                        .fillMaxHeight()
+                        .padding(top = 8.dp)
+                        .alpha(0.7f)
+                )
+            }
+            // Bagian tambahan untuk menampilkan pemasukan dan pengeluaran
+            Row(
                 modifier = Modifier
-                    .fillMaxHeight()
-                    .padding(top = 8.dp)
-                    .alpha(0.7f)
-            )
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
+                    .weight(0.6f),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Column {
+                    Text(
+                        text = "Pemasukan",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = Color.Gray
+                    )
+                    Text(
+                        text = "Rp $totalPemasukan",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = Color(0xFF4CAF50) // Warna hijau untuk pemasukan
+                    )
+                }
+
+                Column {
+                    Text(
+                        text = "Pengeluaran",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = Color.Gray
+                    )
+                    Text(
+                        text = "Rp $totalPengeluaran",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = Color(0xFFF44336) // Warna merah untuk pengeluaran
+                    )
+                }
+            }
         }
     }
 }
@@ -275,14 +316,12 @@ fun KeuanganAdminScreen(
         "Mei", "Juni", "Juli", "Agustus",
         "September", "Oktober", "November", "Desember"
     )
-
     // Daftar tipe transaksi
     val types = listOf("", "pemasukan", "pengeluaran")
 
     LaunchedEffect(Unit) {
         viewModel.fetchAllKeuangan()
     }
-
     // Filter data berdasarkan bulan dan tipe
     val filteredData = listKeuangan.filter { item ->
         val monthMatches = selectedMonth.isEmpty() ||
@@ -292,11 +331,16 @@ fun KeuanganAdminScreen(
         monthMatches && typeMatches
     }
 
+    LaunchedEffect(selectedMonth) {
+        val monthIndex = if (selectedMonth.isEmpty()) null else months.indexOf(selectedMonth)
+        viewModel.setMonthFilter(monthIndex)
+    }
+
     CurvedBackground()
     Column(modifier = modifier.fillMaxWidth().padding(16.dp)) {
-        CardKeuangan()
-
-        // Filter Controls
+        val monthIndex = if (selectedMonth.isEmpty()) null else months.indexOf(selectedMonth)
+        CardKeuangan(viewModel = viewModel, selectedMonth = monthIndex)
+        // Filter
         Row(
             modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
             horizontalArrangement = Arrangement.SpaceBetween
@@ -323,7 +367,7 @@ fun KeuanganAdminScreen(
                     ) {
                         months.forEach { month ->
                             DropdownMenuItem(
-                                text = { Text(if (month.isEmpty()) "Semua Bulan" else month) },
+                                text = { Text(month.ifEmpty { "Semua Bulan" }) },
                                 onClick = {
                                     selectedMonth = month
                                     expanded = false
@@ -333,7 +377,6 @@ fun KeuanganAdminScreen(
                     }
                 }
             }
-
             // Filter Tipe
             Box(modifier = Modifier.weight(1f).padding(start = 8.dp)) {
                 var expanded by remember { mutableStateOf(false) }
@@ -356,7 +399,7 @@ fun KeuanganAdminScreen(
                     ) {
                         types.forEach { type ->
                             DropdownMenuItem(
-                                text = { Text(if (type.isEmpty()) "Semua Tipe" else type) },
+                                text = { Text(type.ifEmpty { "Semua Tipe" }) },
                                 onClick = {
                                     selectedType = type
                                     expanded = false

@@ -22,27 +22,44 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import com.google.firebase.Timestamp
+import java.util.Calendar
+import kotlin.math.abs
 
 class KeuanganViewModel : ViewModel() {
-    // LiveData untuk total saldo
     private val _totalSaldo = MutableLiveData<String>()
     val totalSaldo: LiveData<String> = _totalSaldo
 
     private val _isLoading = MutableLiveData<Boolean>()
     val isLoading: LiveData<Boolean> = _isLoading
 
-    // LiveData untuk status operasi
     private val _operationStatus = MutableLiveData<Pair<Boolean, String>>()
     val operationStatus: LiveData<Pair<Boolean, String>> = _operationStatus
 
     private val _listKeuangan = MutableLiveData<List<Map<String, Any>>>()
     val listKeuangan: LiveData<List<Map<String, Any>>> = _listKeuangan
 
+    private val _totalPemasukan = MutableLiveData<String>()
+    val totalPemasukan: LiveData<String> = _totalPemasukan
+
+    private val _totalPengeluaran = MutableLiveData<String>()
+    val totalPengeluaran: LiveData<String> = _totalPengeluaran
+
+    private val _selectedMonth = MutableLiveData<Int?>(null)
+    private val _selectedType = MutableLiveData<String?>(null)
+
+    //Agar bisa dipanggil di file lain
     init {
         calculateTotalSaldo()
+        calculateIncomeExpense()
     }
 
-    fun uploadImage(context: Context, imageUri: Uri, nominal: String, callback: (Boolean, String) -> Unit) {
+    //Fungsi untuk upload bukti bayar
+    fun uploadImage(
+        context: Context,
+        imageUri: Uri,
+        nominal: String,
+        callback: (Boolean, String) -> Unit
+    ) {
         val file = FileUtil.getFileFromUri(context, imageUri)
         if (file == null) {
             callback(false, "Tidak dapat mengakses file")
@@ -70,7 +87,10 @@ class KeuanganViewModel : ViewModel() {
                 MediaManager.get().upload(compressedFile.absolutePath)
                     .unsigned("keuangan")
                     .option("folder", "folder/keuangan")
-                    .option("public_id", "${safeFullName}_${currentDate.replace("/", "_")}_$timestamp")
+                    .option(
+                        "public_id",
+                        "${safeFullName}_${currentDate.replace("/", "_")}_$timestamp"
+                    )
                     .callback(object : UploadCallback {
                         override fun onStart(requestId: String) {}
 
@@ -98,101 +118,68 @@ class KeuanganViewModel : ViewModel() {
         }
     }
 
-    // New function to record expenses
-    fun recordExpense(nominal: String, keterangan: String) {
+    //Fungsi tambahan untuk filter data
+    fun setMonthFilter(month: Int?) {
+        _selectedMonth.value = month
+        calculateIncomeExpense()
+    }
+
+    //Menghitung pengeluaran dan pemasukan berdasarkna bulan
+    private fun calculateIncomeExpense() {
         _isLoading.value = true
 
-        val userId = FirebaseAuth.getInstance().currentUser?.uid
-        if (userId == null) {
-            _operationStatus.value = Pair(false, "User tidak terautentikasi")
-            _isLoading.value = false
-            return
+        var query: Query = FirebaseFirestore.getInstance().collection("keuangan")
+
+        // Tambahkan filter bulan jika ada
+        _selectedMonth.value?.let { month ->
+            query = query.whereEqualTo("month", month)
         }
 
-        FirebaseFirestore.getInstance().collection("users").document(userId)
-            .get()
-            .addOnSuccessListener { document ->
-                if (document != null && document.exists()) {
-                    val userModel = document.toObject(UserModel::class.java)
+        query.get()
+            .addOnSuccessListener { result ->
+                var pemasukan = 0L
+                var pengeluaran = 0L
 
-                    if (userModel != null) {
-                        val cleanNominalStr = nominal.replace(Regex("[^0-9]"), "")
-                        val nominalLong = cleanNominalStr.toLongOrNull()
-
-                        if (nominalLong == null || nominalLong <= 0L) {
-                            _operationStatus.value = Pair(false, "Nominal tidak valid")
-                            _isLoading.value = false
-                            return@addOnSuccessListener
-                        }
-
-                        val currentDate = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(Date())
-
-                        val pengeluaranData = hashMapOf(
-                            "userId" to userId,
-                            "date" to currentDate,
-                            "nominal" to -nominalLong,  // Simpan sebagai angka negatif untuk pengeluaran
-                            "keterangan" to keterangan,
-                            "timestamp" to FieldValue.serverTimestamp(),
-                            "fullName" to userModel.fullName,
-                            "type" to "pengeluaran"  // Menandai ini sebagai pengeluaran
-                        )
-
-                        FirebaseFirestore.getInstance().collection("keuangan")
-                            .add(pengeluaranData)
-                            .addOnSuccessListener {
-                                calculateTotalSaldo()  // Recalculate total saldo after adding expense
-                                _operationStatus.value = Pair(true, "Pengeluaran berhasil dicatat")
-                                _isLoading.value = false
-                            }
-                            .addOnFailureListener { e ->
-                                _operationStatus.value = Pair(false, "Gagal mencatat pengeluaran: ${e.message}")
-                                _isLoading.value = false
-                            }
-                    } else {
-                        _operationStatus.value = Pair(false, "Data pengguna tidak lengkap")
-                        _isLoading.value = false
+                for (document in result) {
+                    val nominal = document.getLong("nominal") ?: 0L
+                    when (document.getString("type")) {
+                        "pemasukan" -> pemasukan += nominal
+                        "pengeluaran" -> pengeluaran += abs(nominal)
                     }
-                } else {
-                    _operationStatus.value = Pair(false, "Data pengguna tidak ditemukan")
-                    _isLoading.value = false
                 }
+
+                _totalPemasukan.value = DecimalFormat("#,###").format(pemasukan)
+                _totalPengeluaran.value = DecimalFormat("#,###").format(pengeluaran)
+                _isLoading.value = false
             }
-            .addOnFailureListener { e ->
-                _operationStatus.value = Pair(false, "Gagal mengambil data pengguna: ${e.message}")
+            .addOnFailureListener {
+                _totalPemasukan.value = "0"
+                _totalPengeluaran.value = "0"
                 _isLoading.value = false
             }
     }
 
+    //Menghitung total saldo
     fun calculateTotalSaldo() {
         _isLoading.value = true
 
-        FirebaseFirestore.getInstance()
-            .collection("keuangan")
+        FirebaseFirestore.getInstance().collection("keuangan")
             .get()
             .addOnSuccessListener { result ->
                 var total = 0L
-
                 for (document in result) {
-                    // Ensure we're specifically looking for the nominal field as a number
-                    val nominal = when {
-                        document.contains("nominal") -> document.getLong("nominal") ?: 0L
-                        else -> 0L
-                    }
-                    total += nominal  // This now works for both positive (income) and negative (expense) values
+                    total += document.getLong("nominal") ?: 0L
                 }
-
-                // Format the total with thousand separators
-                val formatter = DecimalFormat("#,###")
-                _totalSaldo.value = formatter.format(total)
+                _totalSaldo.value = DecimalFormat("#,###").format(total)
                 _isLoading.value = false
             }
-            .addOnFailureListener { e ->
-                Log.e("KeuanganViewModel", "Error calculating total: ${e.message}")
+            .addOnFailureListener {
                 _totalSaldo.value = "0"
                 _isLoading.value = false
             }
     }
 
+    //Mengambil nama
     private fun getUserFullName(callback: (String) -> Unit) {
         val userId = FirebaseAuth.getInstance().currentUser?.uid
         if (userId == null) {
@@ -215,6 +202,7 @@ class KeuanganViewModel : ViewModel() {
             }
     }
 
+    //Untuk Pemasukan Keuangan
     private fun saveToFirestore(
         imageUrl: String,
         nominal: String,
@@ -232,6 +220,8 @@ class KeuanganViewModel : ViewModel() {
             .addOnSuccessListener { document ->
                 if (document != null && document.exists()) {
                     val userModel = document.toObject(UserModel::class.java)
+                    val now = Date()
+                    val calendar = Calendar.getInstance().apply { time = now }
 
                     if (userModel != null) {
                         val cleanNominalStr = nominal.replace(Regex("[^0-9]"), "")
@@ -246,13 +236,15 @@ class KeuanganViewModel : ViewModel() {
                             "userId" to userId,
                             "imageUrl" to imageUrl,
                             "date" to date,
-                            "nominal" to nominalLong,  // simpan sebagai angka positif untuk pemasukan
+                            "nominal" to nominalLong,
                             "timestamp" to FieldValue.serverTimestamp(),
                             "fullName" to userModel.fullName,
                             "nim" to userModel.nim,
                             "jurusan" to userModel.jurusan,
                             "angkatan" to userModel.angkatan,
-                            "type" to "pemasukan"  // Menandai ini sebagai pemasukan
+                            "type" to "pemasukan",
+                            "month" to calendar.get(Calendar.MONTH) + 1, // Tambah bulan
+                            "year" to calendar.get(Calendar.YEAR)        // Tambah tahun
                         )
 
                         FirebaseFirestore.getInstance().collection("keuangan")
@@ -275,26 +267,112 @@ class KeuanganViewModel : ViewModel() {
             }
     }
 
+    //Untuk Pengeluaran Keuangan
+    fun recordExpense(nominal: String, keterangan: String) {
+        _isLoading.value = true
+
+        val userId = FirebaseAuth.getInstance().currentUser?.uid
+        if (userId == null) {
+            _operationStatus.value = Pair(false, "User tidak terautentikasi")
+            _isLoading.value = false
+            return
+        }
+
+        FirebaseFirestore.getInstance().collection("users").document(userId)
+            .get()
+            .addOnSuccessListener { document ->
+                if (document != null && document.exists()) {
+                    val userModel = document.toObject(UserModel::class.java)
+                    val now = Date()
+                    val calendar = Calendar.getInstance().apply { time = now }
+
+                    if (userModel != null) {
+                        val cleanNominalStr = nominal.replace(Regex("[^0-9]"), "")
+                        val nominalLong = cleanNominalStr.toLongOrNull()
+
+                        if (nominalLong == null || nominalLong <= 0L) {
+                            _operationStatus.value = Pair(false, "Nominal tidak valid")
+                            _isLoading.value = false
+                            return@addOnSuccessListener
+                        }
+
+                        val currentDate =
+                            SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(Date())
+
+                        val pengeluaranData = hashMapOf(
+                            "userId" to userId,
+                            "date" to currentDate,
+                            "nominal" to -nominalLong,
+                            "keterangan" to keterangan,
+                            "timestamp" to FieldValue.serverTimestamp(),
+                            "fullName" to userModel.fullName,
+                            "type" to "pengeluaran",
+                            "month" to calendar.get(Calendar.MONTH) + 1,
+                            "year" to calendar.get(Calendar.YEAR)
+                        )
+
+                        FirebaseFirestore.getInstance().collection("keuangan")
+                            .add(pengeluaranData)
+                            .addOnSuccessListener {
+                                calculateTotalSaldo()  // Recalculate total saldo after adding expense
+                                _operationStatus.value = Pair(true, "Pengeluaran berhasil dicatat")
+                                _isLoading.value = false
+                            }
+                            .addOnFailureListener { e ->
+                                _operationStatus.value =
+                                    Pair(false, "Gagal mencatat pengeluaran: ${e.message}")
+                                _isLoading.value = false
+                            }
+                    } else {
+                        _operationStatus.value = Pair(false, "Data pengguna tidak lengkap")
+                        _isLoading.value = false
+                    }
+                } else {
+                    _operationStatus.value = Pair(false, "Data pengguna tidak ditemukan")
+                    _isLoading.value = false
+                }
+            }
+            .addOnFailureListener { e ->
+                _operationStatus.value = Pair(false, "Gagal mengambil data pengguna: ${e.message}")
+                _isLoading.value = false
+            }
+    }
+
+    //Mengambil seluruh data keuangan
     fun fetchAllKeuangan() {
         _isLoading.value = true
-        FirebaseFirestore.getInstance()
+
+        // Mulai dengan CollectionReference
+        val collectionRef = FirebaseFirestore.getInstance()
             .collection("keuangan")
-            .orderBy("timestamp", Query.Direction.DESCENDING)
-            .get()
+
+        // Buat query berdasarkan filter
+        var query: Query = collectionRef.orderBy("timestamp", Query.Direction.DESCENDING)
+
+        _selectedMonth.value?.let { month ->
+            query = query.whereEqualTo("month", month)
+        }
+
+        _selectedType.value?.let { type ->
+            query = query.whereEqualTo("type", type)
+        }
+
+        query.get()
             .addOnSuccessListener { result ->
                 val dataList = result.documents.mapNotNull { document ->
                     document.data?.toMutableMap()?.apply {
-                        // Konversi timestamp ke format yang bisa difilter
                         val timestamp = this["timestamp"] as? Timestamp
                         timestamp?.let {
                             val date = it.toDate()
                             val dateFormat = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
                             val timeFormat = SimpleDateFormat("HH:mm:ss", Locale.getDefault())
 
-                            this["date"] = dateFormat.format(date) // Format: 01/05/2025
-                            this["time"] = timeFormat.format(date) // Format: 19:19:56
-                            this["month"] = date.month + 1 // Bulan dalam angka (1-12)
-                            this["year"] = date.year + 1900 // Tahun lengkap
+                            this["date"] = dateFormat.format(date)
+                            this["time"] = timeFormat.format(date)
+
+                            val calendar = Calendar.getInstance().apply { time = date }
+                            this["month"] = calendar.get(Calendar.MONTH) + 1
+                            this["year"] = calendar.get(Calendar.YEAR)
                         }
                     }
                 }
@@ -307,5 +385,4 @@ class KeuanganViewModel : ViewModel() {
                 _isLoading.value = false
             }
     }
-
 }
