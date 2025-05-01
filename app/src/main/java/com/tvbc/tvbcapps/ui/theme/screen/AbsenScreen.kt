@@ -13,12 +13,16 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -45,7 +49,10 @@ import com.tvbc.tvbcapps.model.AuthViewModel
 import com.tvbc.tvbcapps.ui.theme.TVBCappsTheme
 
 @Composable
-fun AbsenScreen(navController: NavHostController) {
+fun AbsenScreen(navController: NavHostController, authViewModel: AuthViewModel = viewModel()) {
+    val isUserLoggedIn = authViewModel.isUserLoggedIn()
+    val userRole by authViewModel.userRole.collectAsState()
+    val isUserProfileLoading by authViewModel.isUserProfileLoading.collectAsState()
     val viewModel: AuthViewModel = viewModel()
     Scaffold(
         containerColor = Color.Transparent,
@@ -56,10 +63,18 @@ fun AbsenScreen(navController: NavHostController) {
             BottomNavigationBar(navController, viewModel)
         }
     ) { innerPadding ->
-            ScreenContentAbsen(
-                modifier = Modifier.padding(innerPadding)
-            )
-
+        if (isUserLoggedIn && !isUserProfileLoading) {
+            when (userRole) {
+                "admin" -> {
+                    AbsenAdmin(modifier = Modifier.padding(innerPadding))
+                }
+                "user" -> {
+                    ScreenContentAbsen(
+                        modifier = Modifier.padding(innerPadding)
+                    )
+                }
+            }
+        }
     }
 }
 
@@ -213,7 +228,11 @@ fun RiwayatPresensiCard(
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text("Hadir", style = MaterialTheme.typography.bodyMedium, color = Color.Black)
-                    Text(hadir.toString(), style = MaterialTheme.typography.bodyLarge, color = Color.Gray)
+                    Text(
+                        hadir.toString(),
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = Color.Gray
+                    )
                 }
                 Box(
                     modifier = Modifier
@@ -222,12 +241,30 @@ fun RiwayatPresensiCard(
                         .background(Color(0xFF660000))
                 )
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text("Tidak Hadir", style = MaterialTheme.typography.bodyMedium, color = Color.Black)
-                    Text(tidakHadir.toString(), style = MaterialTheme.typography.bodyLarge, color = Color.Gray)
+                    Text(
+                        "Tidak Hadir",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color.Black
+                    )
+                    Text(
+                        tidakHadir.toString(),
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = Color.Gray
+                    )
                 }
             }
         }
     }
+}
+
+@Composable
+fun AbsenAdmin(modifier: Modifier = Modifier) {
+    Text(
+        text = "afafeafef",
+        modifier = modifier
+            .fillMaxWidth()
+    )
+
 }
 
 @Preview(showBackground = true)

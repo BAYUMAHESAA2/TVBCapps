@@ -2,6 +2,9 @@ package com.tvbc.tvbcapps.model
 
 import android.content.Context
 import android.net.Uri
+import android.util.Log
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.cloudinary.android.MediaManager
 import com.cloudinary.android.callback.ErrorInfo
@@ -13,11 +16,24 @@ import id.zelory.compressor.Compressor
 import com.tvbc.tvbcapps.util.FileUtil
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.launch
+import java.text.DecimalFormat
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
 class KeuanganViewModel : ViewModel() {
+    // LiveData untuk total saldo
+    private val _totalSaldo = MutableLiveData<String>("0")
+    val totalSaldo: LiveData<String> = _totalSaldo
+
+    // LiveData untuk status loading
+    private val _isLoading = MutableLiveData<Boolean>(false)
+    val isLoading: LiveData<Boolean> = _isLoading
+
+    init {
+        // Load total saldo when ViewModel is created
+        calculateTotalSaldo()
+    }
 
     fun uploadImage(context: Context, imageUri: Uri, nominal: String, callback: (Boolean, String) -> Unit) {
         val file = FileUtil.getFileFromUri(context, imageUri)
@@ -60,6 +76,10 @@ class KeuanganViewModel : ViewModel() {
                         override fun onSuccess(requestId: String, resultData: Map<*, *>) {
                             val imageUrl = resultData["url"] as? String ?: ""
                             saveToFirestore(imageUrl, nominal, currentDate) { success, message ->
+                                if (success) {
+                                    // Recalculate total saldo after successful upload
+                                    calculateTotalSaldo()
+                                }
                                 callback(success, message)
                             }
                         }
@@ -73,6 +93,41 @@ class KeuanganViewModel : ViewModel() {
                     .dispatch()
             }
         }
+    }
+
+    // Function to calculate total saldo from all keuangan documents
+    fun calculateTotalSaldo() {
+        _isLoading.value = true
+
+        FirebaseFirestore.getInstance().collection("keuangan")
+            .get()
+            .addOnSuccessListener { documents ->
+                var total = 0L
+
+                for (document in documents) {
+                    // Parse nominal as Long (assuming it's stored as String)
+                    val nominalStr = document.getString("nominal") ?: "0"
+                    try {
+                        // Remove any non-numeric characters (like spaces, commas, etc.)
+                        val cleanNominal = nominalStr.replace(Regex("[^0-9]"), "")
+                        if (cleanNominal.isNotEmpty()) {
+                            total += cleanNominal.toLong()
+                        }
+                    } catch (e: Exception) {
+                        Log.e("KeuanganViewModel", "Error parsing nominal: ${e.message}")
+                    }
+                }
+
+                // Format the total with thousand separators
+                val formatter = DecimalFormat("#,###")
+                _totalSaldo.value = formatter.format(total)
+                _isLoading.value = false
+            }
+            .addOnFailureListener { e ->
+                Log.e("KeuanganViewModel", "Error getting documents: ${e.message}")
+                _totalSaldo.value = "Error"
+                _isLoading.value = false
+            }
     }
 
     private fun getUserFullName(callback: (String) -> Unit) {
@@ -119,11 +174,14 @@ class KeuanganViewModel : ViewModel() {
 
                     // Check if userModel is not null and add data to keuanganData
                     if (userModel != null) {
+                        // Clean up the nominal value (remove non-numeric characters)
+                        val cleanNominal = nominal.replace(Regex("[^0-9]"), "")
+
                         val keuanganData = hashMapOf(
                             "userId" to userId,
                             "imageUrl" to imageUrl,
                             "date" to date,
-                            "nominal" to nominal,  // Added nominal field
+                            "nominal" to cleanNominal,  // Store clean numeric value
                             "timestamp" to FieldValue.serverTimestamp(),
                             "fullName" to userModel.fullName,
                             "nim" to userModel.nim,
