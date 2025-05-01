@@ -29,6 +29,10 @@ class KeuanganViewModel : ViewModel() {
     private val _isLoading = MutableLiveData<Boolean>()
     val isLoading: LiveData<Boolean> = _isLoading
 
+    // LiveData untuk status operasi
+    private val _operationStatus = MutableLiveData<Pair<Boolean, String>>()
+    val operationStatus: LiveData<Pair<Boolean, String>> = _operationStatus
+
     init {
         calculateTotalSaldo()
     }
@@ -89,6 +93,71 @@ class KeuanganViewModel : ViewModel() {
         }
     }
 
+    // New function to record expenses
+    fun recordExpense(nominal: String, keterangan: String) {
+        _isLoading.value = true
+
+        val userId = FirebaseAuth.getInstance().currentUser?.uid
+        if (userId == null) {
+            _operationStatus.value = Pair(false, "User tidak terautentikasi")
+            _isLoading.value = false
+            return
+        }
+
+        FirebaseFirestore.getInstance().collection("users").document(userId)
+            .get()
+            .addOnSuccessListener { document ->
+                if (document != null && document.exists()) {
+                    val userModel = document.toObject(UserModel::class.java)
+
+                    if (userModel != null) {
+                        val cleanNominalStr = nominal.replace(Regex("[^0-9]"), "")
+                        val nominalLong = cleanNominalStr.toLongOrNull()
+
+                        if (nominalLong == null || nominalLong <= 0L) {
+                            _operationStatus.value = Pair(false, "Nominal tidak valid")
+                            _isLoading.value = false
+                            return@addOnSuccessListener
+                        }
+
+                        val currentDate = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(Date())
+
+                        val pengeluaranData = hashMapOf(
+                            "userId" to userId,
+                            "date" to currentDate,
+                            "nominal" to -nominalLong,  // Simpan sebagai angka negatif untuk pengeluaran
+                            "keterangan" to keterangan,
+                            "timestamp" to FieldValue.serverTimestamp(),
+                            "fullName" to userModel.fullName,
+                            "type" to "pengeluaran"  // Menandai ini sebagai pengeluaran
+                        )
+
+                        FirebaseFirestore.getInstance().collection("keuangan")
+                            .add(pengeluaranData)
+                            .addOnSuccessListener {
+                                calculateTotalSaldo()  // Recalculate total saldo after adding expense
+                                _operationStatus.value = Pair(true, "Pengeluaran berhasil dicatat")
+                                _isLoading.value = false
+                            }
+                            .addOnFailureListener { e ->
+                                _operationStatus.value = Pair(false, "Gagal mencatat pengeluaran: ${e.message}")
+                                _isLoading.value = false
+                            }
+                    } else {
+                        _operationStatus.value = Pair(false, "Data pengguna tidak lengkap")
+                        _isLoading.value = false
+                    }
+                } else {
+                    _operationStatus.value = Pair(false, "Data pengguna tidak ditemukan")
+                    _isLoading.value = false
+                }
+            }
+            .addOnFailureListener { e ->
+                _operationStatus.value = Pair(false, "Gagal mengambil data pengguna: ${e.message}")
+                _isLoading.value = false
+            }
+    }
+
     fun calculateTotalSaldo() {
         _isLoading.value = true
 
@@ -104,7 +173,7 @@ class KeuanganViewModel : ViewModel() {
                         document.contains("nominal") -> document.getLong("nominal") ?: 0L
                         else -> 0L
                     }
-                    total += nominal
+                    total += nominal  // This now works for both positive (income) and negative (expense) values
                 }
 
                 // Format the total with thousand separators
@@ -172,12 +241,13 @@ class KeuanganViewModel : ViewModel() {
                             "userId" to userId,
                             "imageUrl" to imageUrl,
                             "date" to date,
-                            "nominal" to nominalLong,  // simpan sebagai angka
+                            "nominal" to nominalLong,  // simpan sebagai angka positif untuk pemasukan
                             "timestamp" to FieldValue.serverTimestamp(),
                             "fullName" to userModel.fullName,
                             "nim" to userModel.nim,
                             "jurusan" to userModel.jurusan,
-                            "angkatan" to userModel.angkatan
+                            "angkatan" to userModel.angkatan,
+                            "type" to "pemasukan"  // Menandai ini sebagai pemasukan
                         )
 
                         FirebaseFirestore.getInstance().collection("keuangan")
