@@ -12,6 +12,8 @@ import com.google.firebase.firestore.FirebaseFirestore
 import id.zelory.compressor.Compressor
 import com.tvbc.tvbcapps.util.FileUtil
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
 class AbsenViewModel : ViewModel() {
@@ -146,6 +148,32 @@ class AbsenViewModel : ViewModel() {
             }
             .addOnFailureListener { e ->
                 callback(false, "Gagal mengambil data pengguna: ${e.message}")
+            }
+    }
+
+    private val TOTAL_LATIHAN_PER_BULAN = 8
+
+    private val _jumlahHadir = MutableStateFlow(0)
+    val jumlahHadir: StateFlow<Int> = _jumlahHadir
+
+    private val _jumlahTidakHadir = MutableStateFlow(TOTAL_LATIHAN_PER_BULAN)
+    val jumlahTidakHadir: StateFlow<Int> = _jumlahTidakHadir
+
+    fun loadJumlahHadir() {
+        val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return
+
+        FirebaseFirestore.getInstance()
+            .collection("absensi")
+            .whereEqualTo("userId", userId)
+            .get()
+            .addOnSuccessListener { result ->
+                val jumlah = result.size()
+                _jumlahHadir.value = jumlah
+                _jumlahTidakHadir.value = TOTAL_LATIHAN_PER_BULAN - jumlah
+            }
+            .addOnFailureListener {
+                _jumlahHadir.value = 0
+                _jumlahTidakHadir.value = TOTAL_LATIHAN_PER_BULAN
             }
     }
 }
