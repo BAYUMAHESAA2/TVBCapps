@@ -109,7 +109,6 @@ fun ScreenContentKeuangan(modifier: Modifier = Modifier, navController: NavHostC
 
     var pilihBulan by remember { mutableStateOf("Pilih Bulan") }
 
-
     Box(
         modifier = modifier
             .fillMaxWidth()

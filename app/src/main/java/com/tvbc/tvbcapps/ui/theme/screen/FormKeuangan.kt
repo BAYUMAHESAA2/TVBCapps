@@ -37,13 +37,19 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -70,6 +76,7 @@ import com.tvbc.tvbcapps.model.AuthViewModel
 import com.tvbc.tvbcapps.model.KeuanganViewModel
 import com.tvbc.tvbcapps.ui.theme.TVBCappsTheme
 import com.tvbc.tvbcapps.util.rememberCameraCaptureLauncher
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -348,86 +355,153 @@ fun FormKeuanganAnggota(
 }
 
 @Composable
-fun FormKeuanganAdmin(modifier: Modifier = Modifier) {
+fun FormKeuanganAdmin(
+    modifier: Modifier = Modifier,
+    keuanganViewModel: KeuanganViewModel = viewModel()
+) {
     var nominal by remember { mutableStateOf("") }
     var nominalError by remember { mutableStateOf(false) }
 
     var keteranganPengeluaran by remember { mutableStateOf("") }
     var keteranganPengeluaranError by remember { mutableStateOf(false) }
 
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(16.dp)
-            .verticalScroll(rememberScrollState()),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Image(
-            painter = painterResource(id = R.drawable.formkeuangan),
-            contentDescription = "Ilustrasi Keuangan",
-            modifier = Modifier
-                .size(325.dp)
-                .padding(vertical = 16.dp)
-        )
+    var isSubmitting by remember { mutableStateOf(false) }
 
-        OutlinedTextField(
-            value = nominal,
-            onValueChange = { nominal = it },
-            label = { Text("Nominal") },
-            isError = nominalError,
-            supportingText = { ErrorHintKeuangan(nominalError)},
-            trailingIcon = {
-                if (nominalError){
-                    IconPickerKeuangan(false)
-                } else{
-                    Icon(
-                        imageVector = Icons.Filled.MonetizationOn,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onBackground
+    // Observe loading state
+    val isLoading by keuanganViewModel.isLoading.observeAsState(initial = false)
+
+    // Observe operation status for showing result
+    val operationStatus by keuanganViewModel.operationStatus.observeAsState()
+
+    // Show snackbar for operation status
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
+
+    // Process operation status
+    LaunchedEffect(operationStatus) {
+        operationStatus?.let { (success, message) ->
+            if (isSubmitting) {
+                scope.launch {
+                    snackbarHostState.showSnackbar(
+                        message = message,
+                        duration = SnackbarDuration.Short
                     )
                 }
-            },
-            singleLine = true,
-            keyboardOptions = KeyboardOptions(
-                keyboardType = KeyboardType.Number,
-                imeAction = ImeAction.Next
-            ),
-            modifier = Modifier.fillMaxWidth()
-        )
 
-        OutlinedTextField(
-            value = keteranganPengeluaran,
-            onValueChange = { keteranganPengeluaran = it },
-            label = { Text("Keterangan Pengeluaran") },
-            isError = keteranganPengeluaranError,
-            supportingText = { ErrorHintKeuangan(keteranganPengeluaranError) },
-            keyboardOptions = KeyboardOptions(
-                capitalization = KeyboardCapitalization.Sentences,
-                keyboardType = KeyboardType.Text,
-                imeAction = ImeAction.Send
-            ),
-            modifier = Modifier.fillMaxWidth()
-        )
+                if (success) {
+                    // Reset form fields if success
+                    nominal = ""
+                    keteranganPengeluaran = ""
+                    nominalError = false
+                    keteranganPengeluaranError = false
+                }
 
-        Button(
-            onClick = {
-                nominalError = (nominal == "" || nominal == "0" || nominal <= "0")
-                keteranganPengeluaranError = (keteranganPengeluaran.isBlank())
-                if (nominalError || keteranganPengeluaranError) return@Button
-            },
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF660000)),
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(48.dp),
-            shape = RoundedCornerShape(8.dp),
-        ) {
-            Text(
-                stringResource(R.string.kirim),
-                color = Color.White,
-                fontWeight = FontWeight.Bold
-            )
+                isSubmitting = false
+            }
         }
+    }
+
+    Box(modifier = modifier.fillMaxSize()) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp)
+                .verticalScroll(rememberScrollState()),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Image(
+                painter = painterResource(id = R.drawable.formkeuangan),
+                contentDescription = "Ilustrasi Keuangan",
+                modifier = Modifier
+                    .size(325.dp)
+                    .padding(vertical = 16.dp)
+            )
+
+            OutlinedTextField(
+                value = nominal,
+                onValueChange = {
+                    nominal = it
+                    nominalError = false
+                },
+                label = { Text("Nominal") },
+                isError = nominalError,
+                supportingText = { ErrorHintKeuangan(nominalError) },
+                trailingIcon = {
+                    if (nominalError) {
+                        IconPickerKeuangan(false)
+                    } else {
+                        Icon(
+                            imageVector = Icons.Filled.MonetizationOn,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onBackground
+                        )
+                    }
+                },
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Number,
+                    imeAction = ImeAction.Next
+                ),
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            OutlinedTextField(
+                value = keteranganPengeluaran,
+                onValueChange = {
+                    keteranganPengeluaran = it
+                    keteranganPengeluaranError = false
+                },
+                label = { Text("Keterangan Pengeluaran") },
+                isError = keteranganPengeluaranError,
+                supportingText = { ErrorHintKeuangan(keteranganPengeluaranError) },
+                keyboardOptions = KeyboardOptions(
+                    capitalization = KeyboardCapitalization.Sentences,
+                    keyboardType = KeyboardType.Text,
+                    imeAction = ImeAction.Send
+                ),
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Button(
+                onClick = {
+                    nominalError = (nominal.isBlank() || nominal == "0" || nominal.toIntOrNull() ?: 0 <= 0)
+                    keteranganPengeluaranError = (keteranganPengeluaran.isBlank())
+
+                    if (!nominalError && !keteranganPengeluaranError) {
+                        isSubmitting = true
+                        keuanganViewModel.recordExpense(nominal, keteranganPengeluaran)
+                    }
+                },
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF660000)),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(48.dp),
+                shape = RoundedCornerShape(8.dp),
+                enabled = !isLoading && !isSubmitting
+            ) {
+                if (isLoading || isSubmitting) {
+                    CircularProgressIndicator(
+                        color = Color.White,
+                        modifier = Modifier.size(24.dp)
+                    )
+                } else {
+                    Text(
+                        "Kirim",
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+        }
+
+        // Snackbar host
+        SnackbarHost(
+            hostState = snackbarHostState,
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(16.dp)
+        )
     }
 }
 
