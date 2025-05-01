@@ -25,25 +25,14 @@ import com.tvbc.tvbcapps.R
 import com.tvbc.tvbcapps.navigation.Screen
 import com.tvbc.tvbcapps.model.AuthViewModel
 
-data class NavItem(
-    val screen: Screen,
-    val label: String,
-    val iconRes: Int,
-    val activeIconRes: Int
-)
-
 @Composable
 fun BottomNavigationBar(navController: NavHostController, authViewModel: AuthViewModel) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
     val userProfile by authViewModel.userProfile.collectAsState()
+    val userRole by authViewModel.userRole.collectAsState()
 
-    val navItems = listOf(
-        NavItem(Screen.Home, "Beranda", R.drawable.logohome, R.drawable.logohomeaktif),
-        NavItem(Screen.Absen, "Absen", R.drawable.logoabsen, R.drawable.logoabsenaktif),
-        NavItem(Screen.Keuangan, "Keuangan", R.drawable.logokeuangan, R.drawable.logokeuanganaktif),
-        NavItem(Screen.Profil, "Profil", R.drawable.logoprofil, R.drawable.logoprofil)
-    )
+    val navItems = buildNavItems(userRole)
 
     NavigationBar(
         modifier = Modifier
@@ -53,16 +42,16 @@ fun BottomNavigationBar(navController: NavHostController, authViewModel: AuthVie
         contentColor = Color.Black
     ) {
         navItems.forEach { item ->
-            val selected = currentDestination?.route == item.screen.route
+            val selected = currentDestination?.route == item.route
 
             NavigationBarItem(
                 selected = selected,
                 onClick = {
-                    if (!selected) navController.navigate(item.screen.route)
+                    if (!selected) navController.navigate(item.route)
                 },
                 icon = {
                     // Special handling for the Profile tab
-                    if (item.screen == Screen.Profil && userProfile?.profileImageUrl?.isNotEmpty() == true) {
+                    if (item.label == "Profil" && userProfile?.profileImageUrl?.isNotEmpty() == true) {
                         val safeUrl = userProfile?.profileImageUrl?.replace("http://", "https://")
                         AsyncImage(
                             model = safeUrl,
@@ -95,4 +84,44 @@ fun BottomNavigationBar(navController: NavHostController, authViewModel: AuthVie
             )
         }
     }
+}
+
+// Kelas untuk navigasi berdasarkan role
+data class RoleBasedNavItem(
+    val label: String,
+    val route: String,
+    val iconRes: Int,
+    val activeIconRes: Int
+)
+
+// Fungsi untuk membuat navigasi berdasarkan role pengguna
+fun buildNavItems(role: String?): List<RoleBasedNavItem> {
+    return listOf(
+        // Beranda - route berbeda berdasarkan role
+        RoleBasedNavItem(
+            "Beranda",
+            if (role == "admin") Screen.AdminHomeScreen.route else Screen.Home.route,
+            R.drawable.logohome,
+            R.drawable.logohomeaktif
+        ),
+        // Item navigasi lainnya tetap sama
+        RoleBasedNavItem(
+            "Absen",
+            Screen.Absen.route,
+            R.drawable.logoabsen,
+            R.drawable.logoabsenaktif
+        ),
+        RoleBasedNavItem(
+            "Keuangan",
+            Screen.Keuangan.route,
+            R.drawable.logokeuangan,
+            R.drawable.logokeuanganaktif
+        ),
+        RoleBasedNavItem(
+            "Profil",
+            Screen.Profil.route,
+            R.drawable.logoprofil,
+            R.drawable.logoprofil
+        )
+    )
 }
