@@ -171,7 +171,6 @@ fun ScreenContentAbsenForm(
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
             .padding(start = 16.dp, end = 16.dp),
-
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         // Gambar form

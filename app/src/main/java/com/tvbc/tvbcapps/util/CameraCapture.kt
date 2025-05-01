@@ -46,6 +46,5 @@ fun rememberCameraCaptureLauncher(
             onImageCaptured(null)
         }
     }
-
     return Pair(photoUri, launchCamera)
 }

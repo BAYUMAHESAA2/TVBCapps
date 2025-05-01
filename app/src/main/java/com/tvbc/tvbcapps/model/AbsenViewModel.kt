@@ -43,6 +43,8 @@ class AbsenViewModel : ViewModel() {
                 val imagePart = uriToMultipart(context, imageUri)
                 val uploadPreset = "TVBCapps".toRequestBody("text/plain".toMediaTypeOrNull())
 
+
+
                 // Upload to Cloudinary
                 val response = cloudinaryApi.uploadImage(
                     cloudName = "dpoivpc9u",
