@@ -1,6 +1,8 @@
 package com.tvbc.tvbcapps.ui.theme.screen
 
 import android.net.Uri
+import android.util.Log
+import androidx.compose.material3.CircularProgressIndicator
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -16,7 +18,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CalendarMonth
@@ -101,22 +105,27 @@ fun FormAbsenScreen(navController: NavHostController) {
             )
         }
     ) { innerPadding ->
-        ScreenContentAbsenForm(
-            Modifier.padding(innerPadding), navController
-        )
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+        ){
+            ScreenContentAbsenForm(
+                navController
+            )
+        }
     }
 }
 
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun ScreenContentAbsenForm(
-    modifier: Modifier = Modifier,
     navController: NavHostController
-
 ) {
     val context = LocalContext.current
     var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
     var selectedDate by remember { mutableStateOf("") }
+    var isLoading by remember { mutableStateOf(false) }
     val viewModel: AbsenViewModel = viewModel()
     val authViewModel: AuthViewModel = viewModel()
 
@@ -134,7 +143,6 @@ fun ScreenContentAbsenForm(
     val (_, launchCamera) = rememberCameraCaptureLauncher(context) {
         selectedImageUri = it
     }
-
 
     val calendar = Calendar.getInstance()
     val datePickerDialog = remember {
@@ -159,10 +167,10 @@ fun ScreenContentAbsenForm(
 
     //kolom di gunakan untuk membatasi gambar dari top app bar dan agar gambar bisa central berada di tengah"
     Column(
-        modifier = modifier
+        modifier = Modifier
             .fillMaxSize()
+            .verticalScroll(rememberScrollState())
             .padding(start = 16.dp, end = 16.dp),
-
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         // Gambar form
@@ -252,46 +260,64 @@ fun ScreenContentAbsenForm(
 
         Button(
             onClick = {
+                isLoading = true
                 val currentUser = FirebaseAuth.getInstance().currentUser
 
                 if (currentUser != null && userProfile != null) {
                     val nama = userProfile?.fullName?: "Nama Tidak Diketahui"
                     val nim = userProfile?.nim?: "NIM Tidak Diketahui"
 
-                    val absenData = Absen(
-                        nama = nama,
-                        nim = nim,
-                        tanggal = selectedDate,
-                        fotoUri = selectedImageUri.toString()
-                    )
+                    selectedImageUri?.let { uri ->
+                        val absenData = Absen(
+                            nama = nama,
+                            nim = nim,
+                            tanggal = selectedDate,
+                            fotoUri = uri.toString()
+                        )
 
-                    viewModel.submitAbsen(
-                        absen = absenData,
-                        onSuccess = {
-                            Toast.makeText(context, "Absen Berhasil!", Toast.LENGTH_SHORT).show()
-                            navController.popBackStack()
-                        },
-                        onError = {
-                            Toast.makeText(
-                                context,
-                                "Gagal Absen: ${it.message}",
-                                Toast.LENGTH_SHORT
-                            ).show()
-                        }
-                    )
+                        viewModel.submitAbsen(
+                            context = context,
+                            absen = absenData,
+                            imageUri = uri,
+                            onSuccess = {
+                                isLoading = false
+                                Toast.makeText(context, "Absen Berhasil!", Toast.LENGTH_SHORT).show()
+                                navController.popBackStack()
+                            },
+                            onError = { error ->
+                                isLoading = false
+                                Log.e("FormAbsenScreen", "Error submitting absen", error)
+                                Toast.makeText(
+                                    context,
+                                    "Gagal Absen: ${error.message ?: "Terjadi kesalahan"}",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
+                        )
+                    } ?: run {
+                        isLoading = false
+                        Toast.makeText(context, "Silakan pilih gambar terlebih dahulu", Toast.LENGTH_SHORT).show()
+                    }
                 } else {
+                    isLoading = false
                     Toast.makeText(context, "User belum login atau data profile kosong", Toast.LENGTH_SHORT).show()
                 }
-
             },
-            enabled = isFormValid,
+            enabled = isFormValid && !isLoading,
             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF660000)),
             modifier = Modifier
                 .fillMaxWidth()
                 .height(48.dp),
             shape = RoundedCornerShape(8.dp)
         ) {
-            Text(stringResource(R.string.kirim), color = Color.White, fontWeight = FontWeight.Bold)
+            if (isLoading) {
+                CircularProgressIndicator(
+                    color = Color.White,
+                    modifier = Modifier.size(24.dp)
+                )
+            } else {
+                Text(stringResource(R.string.kirim), color = Color.White, fontWeight = FontWeight.Bold)
+            }
         }
     }
 }
