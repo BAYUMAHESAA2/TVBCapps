@@ -2,6 +2,8 @@ package com.tvbc.tvbcapps.model
 
 import android.content.Context
 import android.net.Uri
+import androidx.compose.runtime.State
+import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import com.cloudinary.android.MediaManager
 import com.cloudinary.android.callback.ErrorInfo
@@ -12,6 +14,8 @@ import com.google.firebase.firestore.FirebaseFirestore
 import id.zelory.compressor.Compressor
 import com.tvbc.tvbcapps.util.FileUtil
 import androidx.lifecycle.viewModelScope
+import com.google.firebase.Firebase
+import com.google.firebase.firestore.firestore
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -233,4 +237,34 @@ class AbsenViewModel : ViewModel() {
         val calendar = Calendar.getInstance()
         return calendar.get(Calendar.YEAR).toString()
     }
+
+    private val _isAbsenEnabled = mutableStateOf(false)
+    val isAbsenEnabled: State<Boolean> = _isAbsenEnabled
+
+    private val _isLoading = mutableStateOf(false)
+    val isLoading: State<Boolean> = _isLoading
+
+    init {
+        setupFirestoreListener()
+    }
+
+    private fun setupFirestoreListener() {
+        Firebase.firestore.collection("settings").document("absen_button")
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) return@addSnapshotListener
+                snapshot?.getBoolean("isEnabled")?.let { enabled ->
+                    _isAbsenEnabled.value = enabled
+                }
+            }
+    }
+
+    fun setAbsenEnabled(enabled: Boolean) {
+        _isLoading.value = true
+        Firebase.firestore.collection("settings").document("absen_button")
+            .set(mapOf("isEnabled" to enabled))
+            .addOnCompleteListener {
+                _isLoading.value = false
+            }
+    }
+
 }

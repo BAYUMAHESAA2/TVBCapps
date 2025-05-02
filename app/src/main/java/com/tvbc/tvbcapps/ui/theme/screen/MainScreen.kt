@@ -5,15 +5,12 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -23,6 +20,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -34,6 +34,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
+import com.google.firebase.Firebase
+import com.google.firebase.firestore.firestore
 import com.tvbc.tvbcapps.R
 import com.tvbc.tvbcapps.component.BottomNavigationBar
 import com.tvbc.tvbcapps.component.CurvedBackground
@@ -63,28 +65,49 @@ fun MainScreen(navController: NavHostController) {
 
 @Composable
 fun ScreenContent(modifier: Modifier = Modifier, navController: NavHostController) {
-    Box(
-        modifier = modifier
-            .fillMaxSize()
+    val isButtonEnabled = remember { mutableStateOf(false) }
 
+    LaunchedEffect(Unit) {
+        Firebase.firestore.collection("settings").document("absen_button")
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    // Handle error
+                    return@addSnapshotListener
+                }
+
+                if (snapshot != null && snapshot.exists()) {
+                    isButtonEnabled.value = snapshot.getBoolean("isEnabled") == true
+                }
+            }
+    }
+
+    Column(
+        modifier = modifier.fillMaxSize()
     ) {
-        CurvedBackground()
-        LazyRow(
+        // Top part with background and single card
+        Box(
             modifier = Modifier
-                .fillMaxSize(),
-            contentPadding = PaddingValues(horizontal = 16.dp),
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
+                .fillMaxWidth()
+                .height(250.dp)
         ) {
-            items(2) { index ->
+            CurvedBackground()
+
+            // Center the single card for "latihan rutin"
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 32.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                //card latihan rutin
                 Card(
                     modifier = Modifier
-                        .width(300.dp)
-                        .height(180.dp),
-                    shape = MaterialTheme.shapes.large,
-                    elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = Color.White
-                    )
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp)
+                        .height(150.dp),
+                    shape = MaterialTheme.shapes.medium,
+                    elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color.White)
                 ) {
                     Box(modifier = Modifier.fillMaxSize()) {
                         Column(
@@ -99,21 +122,22 @@ fun ScreenContent(modifier: Modifier = Modifier, navController: NavHostControlle
                                 style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                                 color = Color.Black
                             )
-                            Spacer(modifier = Modifier.height(80.dp))
+                            Spacer(modifier = Modifier.height(60.dp))
                             Button(
                                 onClick = {
-                                    navController.navigate(Screen.FormAbsen.route)
+                                    if (isButtonEnabled.value) {
+                                        navController.navigate(Screen.FormAbsen.route)
+                                    }
                                 },
                                 colors = ButtonDefaults.buttonColors(
-                                    containerColor = Color(0xFF660000), // Warna marun sesuai gambar
-                                    contentColor = Color.White // Warna teks putih
+                                    containerColor = if (isButtonEnabled.value) Color(0xFF660000) else Color.Gray,
+                                    contentColor = Color.White
                                 ),
-
                                 shape = RoundedCornerShape(8.dp),
-
-                                ) {
+                                enabled = isButtonEnabled.value
+                            ) {
                                 Text(
-                                    text = "Absen",
+                                    text = if (isButtonEnabled.value) "Absen" else "Absen (Non-aktif)",
                                     style = MaterialTheme.typography.bodyLarge,
                                 )
                             }
@@ -127,70 +151,31 @@ fun ScreenContent(modifier: Modifier = Modifier, navController: NavHostControlle
                         )
                     }
                 }
-
             }
         }
-        // Rekap Keuangan
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(top = 200.dp)
-        ) {
-            Text(
-                text = stringResource(id = R.string.teks_rekap_keuangan),
-                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                color = Color.Black
-            )
 
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp)
-                    .height(150.dp),
-                shape = MaterialTheme.shapes.medium,
-                elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White)
-            ) {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text(
-                        text = "Ini adalah card info tambahan",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = Color.Black
-                    )
-                }
-            }
-            Text(
-                text = "data",
-                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                modifier = Modifier.padding(start = 16.dp, top = 24.dp, bottom = 8.dp),
-                color = Color.Black
-            )
-            LazyRow(
-                contentPadding = PaddingValues(horizontal = 16.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                items(3) { index ->
-                    Card(
-                        modifier = Modifier
-                            .width(200.dp)
-                            .height(120.dp),
-                        shape = RoundedCornerShape(16.dp),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
-                        colors = CardDefaults.cardColors(containerColor = Color.White)
-                    ) {
-                        Box(
-                            modifier = Modifier.fillMaxSize(),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = "Card ${index + 1}",
-                                style = MaterialTheme.typography.bodyLarge,
-                                color = Color.Black
-                            )
-                        }
-                    }
-                }
+        // Rekap Keuangan
+        Text(
+            text = stringResource(id = R.string.teks_rekap_keuangan),
+            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+            color = Color.Black
+        )
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp)
+                .height(150.dp),
+            shape = MaterialTheme.shapes.medium,
+            elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
+            colors = CardDefaults.cardColors(containerColor = Color.White)
+        ) {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Text(
+                    text = "Ini adalah card info tambahan",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = Color.Black
+                )
             }
         }
     }
