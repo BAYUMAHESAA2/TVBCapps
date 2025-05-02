@@ -1,6 +1,8 @@
 package com.tvbc.tvbcapps.ui.theme.screen
 
+import android.content.ClipData
 import android.content.res.Configuration
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -11,14 +13,21 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -35,8 +44,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -51,7 +60,15 @@ import com.tvbc.tvbcapps.model.AbsenViewModel
 import com.tvbc.tvbcapps.model.AuthViewModel
 import com.tvbc.tvbcapps.ui.theme.TVBCappsTheme
 import java.util.Calendar
+import android.content.ClipboardManager
+import android.content.Context
+import android.os.Build
+import androidx.annotation.RequiresApi
+import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material3.DropdownMenu
+import java.time.LocalDate
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun AbsenScreen(navController: NavHostController, authViewModel: AuthViewModel = viewModel()) {
     val isUserLoggedIn = authViewModel.isUserLoggedIn()
@@ -284,84 +301,208 @@ fun RiwayatPresensiCard(
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun AbsenAdmin(modifier: Modifier = Modifier) {
-    // Local state for switch
+fun AbsenAdmin(
+    modifier: Modifier = Modifier,
+    viewModel: AbsenViewModel = viewModel()
+) {
     val isEnabled = remember { mutableStateOf(false) }
     val isLoading = remember { mutableStateOf(false) }
+    val absenList by viewModel.absenList.collectAsState()
+    val context = LocalContext.current
+    val currentDate = LocalDate.now()
+    val currentMonth = currentDate.monthValue.toString() // Mengambil bulan sekarang sebagai string
+    val currentDay = currentDate.dayOfMonth.toString() // Mengambil tanggal sekarang sebagai string
 
-    // Get the initial state from Firestore
+    val selectedMonth = remember { mutableStateOf(currentMonth) }
+    val selectedDate = remember { mutableStateOf(currentDay) }
+
+    val filteredList = absenList.filter { absen ->
+        val parts = absen.date.split("/")
+        parts.size == 3 &&
+                parts[0] == selectedDate.value &&
+                parts[1] == selectedMonth.value
+    }
+
     LaunchedEffect(Unit) {
+        viewModel.loadAllAbsensi()
+
         Firebase.firestore.collection("settings").document("absen_button")
             .addSnapshotListener { snapshot, error ->
-                if (error != null) {
-                    // Handle error
-                    return@addSnapshotListener
-                }
-
+                if (error != null) return@addSnapshotListener
                 if (snapshot != null && snapshot.exists()) {
                     isEnabled.value = snapshot.getBoolean("isEnabled") == true
                 }
             }
     }
 
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(16.dp)
-    ) {
-        Text(
-            text = "Pengaturan Tombol Absen",
-            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-            modifier = Modifier.padding(bottom = 16.dp)
-        )
+    Column(modifier = modifier.padding(16.dp)) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 16.dp),
+            shape = RoundedCornerShape(16.dp),
+            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
+            colors = CardDefaults.cardColors(containerColor = Color.White)
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Aktifkan Tombol Absen:", modifier = Modifier.weight(1f))
+                    Switch(
+                        checked = isEnabled.value,
+                        onCheckedChange = { newValue ->
+                            isLoading.value = true
+                            Firebase.firestore.collection("settings").document("absen_button")
+                                .set(mapOf("isEnabled" to newValue))
+                                .addOnSuccessListener { isLoading.value = false }
+                                .addOnFailureListener { isLoading.value = false }
+                        },
+                        colors = SwitchDefaults.colors(
+                            checkedThumbColor = Color(0xFF660000),
+                            checkedTrackColor = Color(0xFFCC9999)
+                        ),
+                        enabled = !isLoading.value
+                    )
+                }
+                Text(
+                    text = "Status: ${if (isEnabled.value) "Aktif" else "Non-aktif"}" +
+                            if (isLoading.value) " (Memperbarui...)" else "",
+                    modifier = Modifier.padding(top = 8.dp)
+                )
+            }
+        }
 
         Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            DropdownSelector(
+                label = "Tanggal",
+                options = (1..31).map { it.toString() },
+                selected = selectedDate.value,
+                onSelectedChange = { selectedDate.value = it }
+            )
+            DropdownSelector(
+                label = "Bulan",
+                options = (1..12).map { it.toString() },
+                selected = selectedMonth.value,
+                onSelectedChange = { selectedMonth.value = it }
+            )
+        }
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.fillMaxWidth()
+            horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Text(
-                text = "Aktifkan Tombol Absen:",
-                modifier = Modifier.weight(1f)
+                "Data Absensi:",
+                style = MaterialTheme.typography.titleMedium
             )
 
-            Switch(
-                checked = isEnabled.value,
-                onCheckedChange = { newValue ->
-                    // Show loading state
-                    isLoading.value = true
-
-                    // Update to Firestore
-                    Firebase.firestore.collection("settings").document("absen_button")
-                        .set(mapOf("isEnabled" to newValue))
-                        .addOnSuccessListener {
-                            // Success - the snapshot listener will update the UI
-                            isLoading.value = false
-                        }
-                        .addOnFailureListener { _ ->
-                            // Handle failure
-                            isLoading.value = false
-                            // Maybe show an error message
-                        }
-                },
-                colors = SwitchDefaults.colors(
-                    checkedThumbColor = Color(0xFF660000),
-                    checkedTrackColor = Color(0xFFCC9999)
-                ),
-                enabled = !isLoading.value
+            Text(
+                text = "Jumlah yang hadir: ${filteredList.size} orang",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
             )
         }
 
-        Text(
-            text = "Status: ${if (isEnabled.value) "Aktif" else "Non-aktif"}" +
-                    if (isLoading.value) " (Memperbarui...)" else "",
-            style = MaterialTheme.typography.bodyMedium,
-            modifier = Modifier.padding(top = 8.dp)
-        )
+
+        LazyColumn(modifier = Modifier.padding(horizontal = 16.dp)) {
+            items(filteredList) { absen ->
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 4.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    elevation = CardDefaults.cardElevation(4.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFFF7F7F7))
+                ) {
+                    Column(modifier = Modifier.padding(12.dp)) {
+                        Text("Nama: ${absen.fullName}")
+                        Text("NIM: ${absen.nim}")
+                        Text("Jurusan: ${absen.jurusan}")
+                        Text("Angkatan: ${absen.angkatan}")
+                        Text("Tanggal: ${absen.date}")
+
+                        if (absen.imageUrl.isNotBlank()) {
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text("Link Bukti Absen: ")
+                                IconButton(
+                                    onClick = {
+                                        val clipboardManager = context.getSystemService(
+                                            Context.CLIPBOARD_SERVICE
+                                        ) as ClipboardManager
+                                        clipboardManager.setPrimaryClip(
+                                            ClipData.newPlainText("Image URL", absen.imageUrl)
+                                        )
+                                        Toast.makeText(
+                                            context,
+                                            "Link disalin",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                    },
+                                    modifier = Modifier.size(24.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.ContentCopy,
+                                        contentDescription = "Salin link",
+                                        tint = Color.Gray
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 
+@Composable
+fun DropdownSelector(
+    label: String,
+    options: List<String>,
+    selected: String,
+    onSelectedChange: (String) -> Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
 
+    Box {
+        OutlinedTextField(
+            value = selected,
+            onValueChange = {},
+            readOnly = true,
+            label = { Text(label) },
+            modifier = Modifier.width(150.dp),
+            trailingIcon = {
+                IconButton(onClick = { expanded = true }) {
+                    Icon(Icons.Default.ArrowDropDown, contentDescription = null)
+                }
+            }
+        )
+        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+            options.forEach { option ->
+                DropdownMenuItem(text = { Text(option) }, onClick = {
+                    onSelectedChange(option)
+                    expanded = false
+                })
+            }
+        }
+    }
+}
+
+@RequiresApi(Build.VERSION_CODES.O)
 @Preview(showBackground = true)
 @Preview(uiMode = Configuration.UI_MODE_NIGHT_YES, showBackground = true)
 @Composable

@@ -11,7 +11,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -82,24 +84,24 @@ fun ScreenContent(modifier: Modifier = Modifier, navController: NavHostControlle
     }
 
     Column(
-        modifier = modifier.fillMaxSize()
+        modifier = modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
     ) {
-        // Top part with background and single card
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(250.dp)
+                .height(200.dp)
         ) {
             CurvedBackground()
 
-            // Center the single card for "latihan rutin"
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = 32.dp),
                 contentAlignment = Alignment.Center
             ) {
-                //card latihan rutin
+                // Card Latihan Rutin
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -154,6 +156,8 @@ fun ScreenContent(modifier: Modifier = Modifier, navController: NavHostControlle
             }
         }
 
+        Spacer(modifier = Modifier.height(16.dp))
+
         // Rekap Keuangan
         Text(
             text = stringResource(id = R.string.teks_rekap_keuangan),
@@ -161,25 +165,18 @@ fun ScreenContent(modifier: Modifier = Modifier, navController: NavHostControlle
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
             color = Color.Black
         )
-        Card(
+
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp)
-                .height(150.dp),
-            shape = MaterialTheme.shapes.medium,
-            elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
-            colors = CardDefaults.cardColors(containerColor = Color.White)
+                .height(150.dp)
         ) {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text(
-                    text = "Ini adalah card info tambahan",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = Color.Black
-                )
-            }
+            CardKeuangan()
         }
     }
 }
+
 
 @Preview(showBackground = true)
 @Preview(uiMode = Configuration.UI_MODE_NIGHT_YES, showBackground = true)

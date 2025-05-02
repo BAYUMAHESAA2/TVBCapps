@@ -16,14 +16,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.MonetizationOn
 import androidx.compose.material.icons.filled.Warning
@@ -75,7 +73,6 @@ import com.tvbc.tvbcapps.R
 import com.tvbc.tvbcapps.model.AuthViewModel
 import com.tvbc.tvbcapps.model.KeuanganViewModel
 import com.tvbc.tvbcapps.ui.theme.TVBCappsTheme
-import com.tvbc.tvbcapps.util.rememberCameraCaptureLauncher
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -154,30 +151,14 @@ fun FormKeuanganAnggota(
     var isUploading by remember { mutableStateOf(false) }
     var uploadStatus by remember { mutableStateOf("") }
 
-    // Permission handling
-    val permissionsToRequest = remember {
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
-            arrayOf(
-                android.Manifest.permission.CAMERA,
-                android.Manifest.permission.READ_MEDIA_IMAGES
-            )
-        } else {
-            arrayOf(
-                android.Manifest.permission.CAMERA,
-                android.Manifest.permission.READ_EXTERNAL_STORAGE
-            )
-        }
-    }
-
     val permissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { permissions ->
         val allGranted = permissions.all { it.value }
-        if (allGranted) {
-            // Permissions granted, proceed with action
-            uploadStatus = ""
+        uploadStatus = if (allGranted) {
+            ""
         } else {
-            uploadStatus = "Izin diperlukan untuk menggunakan fitur ini"
+            "Izin diperlukan untuk menggunakan fitur ini"
         }
     }
 
@@ -190,10 +171,6 @@ fun FormKeuanganAnggota(
         }
     }
 
-    val (_, launchCamera) = rememberCameraCaptureLauncher(context) {
-        selectedImageUri = it
-    }
-
     // Function to check permissions and launch image picker
     fun launchImagePicker() {
         permissionLauncher.launch(
@@ -204,12 +181,6 @@ fun FormKeuanganAnggota(
             }
         )
         imagePickerLauncher.launch("image/*")
-    }
-
-    // Function to check permissions and launch camera
-    fun checkPermissionsAndLaunchCamera() {
-        permissionLauncher.launch(permissionsToRequest)
-        launchCamera()
     }
 
     // Function to upload to Cloudinary
@@ -301,24 +272,7 @@ fun FormKeuanganAnggota(
             }
         }
 
-        Spacer(modifier = Modifier.height(6.dp))
-        Text(stringResource(R.string.atau))
-
-        Button(
-            onClick = { checkPermissionsAndLaunchCamera() },
-            colors = ButtonDefaults.buttonColors(containerColor = Color.Gray),
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 8.dp),
-            shape = RoundedCornerShape(8.dp)
-        ) {
-            Icon(
-                Icons.Default.CameraAlt,
-                contentDescription = null,
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(stringResource(R.string.buka_kamera))
-        }
+        Spacer(modifier = Modifier.height(16.dp))
 
         // Show upload status if any
         if (uploadStatus.isNotEmpty()) {
@@ -465,7 +419,8 @@ fun FormKeuanganAdmin(
 
             Button(
                 onClick = {
-                    nominalError = (nominal.isBlank() || nominal == "0" || nominal.toIntOrNull() ?: 0 <= 0)
+                    nominalError = ((nominal.isBlank() || nominal == "0" || (nominal.toIntOrNull()
+                        ?: 0) <= 0))
                     keteranganPengeluaranError = (keteranganPengeluaran.isBlank())
 
                     if (!nominalError && !keteranganPengeluaranError) {
