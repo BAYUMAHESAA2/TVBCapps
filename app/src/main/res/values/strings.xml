@@ -15,18 +15,18 @@
     <string name="notif2">Bayar Kas</string>
 
     <!--Absen Screen-->
-    <string name="january">Januari 2025</string>
-    <string name="february">Februari 2025</string>
-    <string name="march">Maret 2025</string>
-    <string name="april">April 2025</string>
-    <string name="may">Mei 2025</string>
-    <string name="june">Juni 2025</string>
-    <string name="july">Juli 2025</string>
-    <string name="august">Agustus 2025</string>
-    <string name="september">September 2025</string>
-    <string name="october">Oktober 2025</string>
-    <string name="november">November 2025</string>
-    <string name="desember">Desember 2025</string>
+    <string name="january">Januari</string>
+    <string name="february">Februari</string>
+    <string name="march">Maret</string>
+    <string name="april">April</string>
+    <string name="may">Mei</string>
+    <string name="june">Juni</string>
+    <string name="july">Juli</string>
+    <string name="august">Agustus</string>
+    <string name="september">September</string>
+    <string name="october">Oktober</string>
+    <string name="november">November</string>
+    <string name="desember">Desember</string>
     <string name="pilih_bulan">Pilih Bulan</string>
     <string name="riwayat_absen">Riwayat Absensi</string>
 

@@ -15,8 +15,24 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import java.util.Calendar
 
 class AbsenViewModel : ViewModel() {
+    private val totalLatihanPerBulan = 8
+
+    private val _jumlahHadir = MutableStateFlow(0)
+    val jumlahHadir: StateFlow<Int> = _jumlahHadir
+
+    private val _jumlahTidakHadir = MutableStateFlow(totalLatihanPerBulan)
+    val jumlahTidakHadir: StateFlow<Int> = _jumlahTidakHadir
+
+    private val _selectedMonth = MutableStateFlow("")
+    val selectedMonth: StateFlow<String> = _selectedMonth
+
+    fun setSelectedMonth(month: String, year: String = getCurrentYear()) {
+        _selectedMonth.value = month
+        loadJumlahHadirByMonth(month, year)
+    }
 
     fun uploadImage(context: Context, imageUri: Uri, date: String, callback: (Boolean, String) -> Unit) {
         val file = FileUtil.getFileFromUri(context, imageUri)
@@ -49,8 +65,6 @@ class AbsenViewModel : ViewModel() {
                 MediaManager.get().upload(compressedFile.absolutePath)
                     .unsigned("absensi")
                     .option("folder", "folder/absensi")
-                // Add current timestamp to ensure uniqueness
-
                     .option("public_id", "${safeFullName}_${date.replace("/", "_")}_$timestamp")
                     .callback(object : UploadCallback {
                         override fun onStart(requestId: String) {}
@@ -59,8 +73,15 @@ class AbsenViewModel : ViewModel() {
 
                         override fun onSuccess(requestId: String, resultData: Map<*, *>) {
                             val imageUrl = resultData["url"] as? String ?: ""
-                            saveToFirestore(imageUrl, date) { success, message ->
-                                // Pastikan callback ini dipanggil setelah Firestore selesai
+
+                            val dateParts = date.split("/")
+                            val month = getMonthName(dateParts[1].toInt())
+                            val year = dateParts[2]
+
+                            saveToFirestore(imageUrl, date, month, year) { success, message ->
+                                if (success && _selectedMonth.value == month) {
+                                    loadJumlahHadirByMonth(month, year)
+                                }
                                 callback(success, message)
                             }
                         }
@@ -98,9 +119,12 @@ class AbsenViewModel : ViewModel() {
             }
     }
 
+    //Memasukkan data ke firestore absensi
     private fun saveToFirestore(
         imageUrl: String,
         date: String,
+        month: String,
+        year: String,
         callback: (Boolean, String) -> Unit
     ) {
         // Dapatkan user ID dari Firebase Auth
@@ -117,12 +141,13 @@ class AbsenViewModel : ViewModel() {
                 if (document != null && document.exists()) {
                     val userModel = document.toObject(UserModel::class.java)
 
-                    // Periksa apakah userModel tidak null dan masukkan data ke absenData
                     if (userModel != null) {
                         val absenData = hashMapOf(
                             "userId" to userId,
                             "imageUrl" to imageUrl,
                             "date" to date,
+                            "month" to month,
+                            "year" to year,
                             "timestamp" to FieldValue.serverTimestamp(),
                             "fullName" to userModel.fullName,
                             "nim" to userModel.nim,
@@ -151,29 +176,61 @@ class AbsenViewModel : ViewModel() {
             }
     }
 
-    private val TOTAL_LATIHAN_PER_BULAN = 8
-
-    private val _jumlahHadir = MutableStateFlow(0)
-    val jumlahHadir: StateFlow<Int> = _jumlahHadir
-
-    private val _jumlahTidakHadir = MutableStateFlow(TOTAL_LATIHAN_PER_BULAN)
-    val jumlahTidakHadir: StateFlow<Int> = _jumlahTidakHadir
-
+    //Menghitung jumlah hadir
     fun loadJumlahHadir() {
+        val currentMonth = getCurrentMonth()
+        val currentYear = getCurrentYear()
+        _selectedMonth.value = currentMonth
+        loadJumlahHadirByMonth(currentMonth, currentYear)
+    }
+
+    //Menghitung jumlah hadir dari bulan
+    fun loadJumlahHadirByMonth(month: String, year: String) {
         val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return
 
         FirebaseFirestore.getInstance()
             .collection("absensi")
             .whereEqualTo("userId", userId)
+            .whereEqualTo("month", month)
+            .whereEqualTo("year", year)
             .get()
             .addOnSuccessListener { result ->
                 val jumlah = result.size()
                 _jumlahHadir.value = jumlah
-                _jumlahTidakHadir.value = TOTAL_LATIHAN_PER_BULAN - jumlah
+                _jumlahTidakHadir.value = totalLatihanPerBulan - jumlah
             }
             .addOnFailureListener {
                 _jumlahHadir.value = 0
-                _jumlahTidakHadir.value = TOTAL_LATIHAN_PER_BULAN
+                _jumlahTidakHadir.value = totalLatihanPerBulan
             }
+    }
+
+    private fun getMonthName(monthNumber: Int): String {
+        return when (monthNumber) {
+            1 -> "Januari"
+            2 -> "Februari"
+            3 -> "Maret"
+            4 -> "April"
+            5 -> "Mei"
+            6 -> "Juni"
+            7 -> "Juli"
+            8 -> "Agustus"
+            9 -> "September"
+            10 -> "Oktober"
+            11 -> "November"
+            12 -> "Desember"
+            else -> ""
+        }
+    }
+
+    private fun getCurrentMonth(): String {
+        val calendar = Calendar.getInstance()
+        val monthNumber = calendar.get(Calendar.MONTH) + 1 // Calendar.MONTH is 0-based
+        return getMonthName(monthNumber)
+    }
+
+    private fun getCurrentYear(): String {
+        val calendar = Calendar.getInstance()
+        return calendar.get(Calendar.YEAR).toString()
     }
 }

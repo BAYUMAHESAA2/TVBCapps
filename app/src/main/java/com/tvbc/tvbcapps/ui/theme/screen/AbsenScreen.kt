@@ -45,6 +45,7 @@ import com.tvbc.tvbcapps.component.TopBar
 import com.tvbc.tvbcapps.model.AbsenViewModel
 import com.tvbc.tvbcapps.model.AuthViewModel
 import com.tvbc.tvbcapps.ui.theme.TVBCappsTheme
+import java.util.Calendar
 
 @Composable
 fun AbsenScreen(navController: NavHostController, authViewModel: AuthViewModel = viewModel()) {
@@ -87,6 +88,7 @@ fun ScreenContentAbsen(
     val userProfile by authViewModel.userProfile.collectAsState()
     val jumlahHadir by absenViewModel.jumlahHadir.collectAsState()
     val jumlahTidakHadir by absenViewModel.jumlahTidakHadir.collectAsState()
+    val selectedMonth by absenViewModel.selectedMonth.collectAsState()
 
     LaunchedEffect(Unit) {
         absenViewModel.loadJumlahHadir()
@@ -115,9 +117,16 @@ fun ScreenContentAbsen(
         )
     }
 
-    var pilihBulan by remember { mutableStateOf(bulan[0]) }
+    var pilihBulan by remember { mutableStateOf(selectedMonth) }
 
-    // --- Tambahan: cek kalau null atau kosong ---
+    LaunchedEffect(selectedMonth) {
+        if (selectedMonth.isNotEmpty()) {
+            pilihBulan = selectedMonth
+        }
+    }
+
+    val currentYear = remember { Calendar.getInstance().get(Calendar.YEAR).toString() }
+
     val namaUser = userProfile?.fullName?.takeIf { it.isNotBlank() } ?: "Nama tidak tersedia"
     val nimUser = userProfile?.nim?.takeIf { it.isNotBlank() } ?: "NIM belum dilengkapi"
 
@@ -196,11 +205,20 @@ fun ScreenContentAbsen(
                         onClick = {
                             pilihBulan = bulanItem
                             expanded = false
+                            // Update the attendance count for the selected month
+                            absenViewModel.setSelectedMonth(bulanItem, currentYear)
                         }
                     )
                 }
             }
         }
+
+        Text(
+            text = "Absensi bulan $pilihBulan $currentYear",
+            style = MaterialTheme.typography.bodyMedium,
+            modifier = Modifier.padding(top = 8.dp, start = 8.dp)
+        )
+
         RiwayatPresensiCard(hadir = jumlahHadir, tidakHadir = jumlahTidakHadir)
     }
 }
