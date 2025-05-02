@@ -22,6 +22,8 @@ import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -34,11 +36,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
+import com.google.firebase.Firebase
+import com.google.firebase.firestore.firestore
 import com.tvbc.tvbcapps.R
 import com.tvbc.tvbcapps.component.BottomNavigationBar
 import com.tvbc.tvbcapps.component.TopBar
@@ -281,13 +286,81 @@ fun RiwayatPresensiCard(
 
 @Composable
 fun AbsenAdmin(modifier: Modifier = Modifier) {
-    Text(
-        text = "afafeafef",
+    // Local state for switch
+    val isEnabled = remember { mutableStateOf(false) }
+    val isLoading = remember { mutableStateOf(false) }
+
+    // Get the initial state from Firestore
+    LaunchedEffect(Unit) {
+        Firebase.firestore.collection("settings").document("absen_button")
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    // Handle error
+                    return@addSnapshotListener
+                }
+
+                if (snapshot != null && snapshot.exists()) {
+                    isEnabled.value = snapshot.getBoolean("isEnabled") == true
+                }
+            }
+    }
+
+    Column(
         modifier = modifier
             .fillMaxWidth()
-    )
+            .padding(16.dp)
+    ) {
+        Text(
+            text = "Pengaturan Tombol Absen",
+            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+            modifier = Modifier.padding(bottom = 16.dp)
+        )
 
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text(
+                text = "Aktifkan Tombol Absen:",
+                modifier = Modifier.weight(1f)
+            )
+
+            Switch(
+                checked = isEnabled.value,
+                onCheckedChange = { newValue ->
+                    // Show loading state
+                    isLoading.value = true
+
+                    // Update to Firestore
+                    Firebase.firestore.collection("settings").document("absen_button")
+                        .set(mapOf("isEnabled" to newValue))
+                        .addOnSuccessListener {
+                            // Success - the snapshot listener will update the UI
+                            isLoading.value = false
+                        }
+                        .addOnFailureListener { _ ->
+                            // Handle failure
+                            isLoading.value = false
+                            // Maybe show an error message
+                        }
+                },
+                colors = SwitchDefaults.colors(
+                    checkedThumbColor = Color(0xFF660000),
+                    checkedTrackColor = Color(0xFFCC9999)
+                ),
+                enabled = !isLoading.value
+            )
+        }
+
+        Text(
+            text = "Status: ${if (isEnabled.value) "Aktif" else "Non-aktif"}" +
+                    if (isLoading.value) " (Memperbarui...)" else "",
+            style = MaterialTheme.typography.bodyMedium,
+            modifier = Modifier.padding(top = 8.dp)
+        )
+    }
 }
+
 
 @Preview(showBackground = true)
 @Preview(uiMode = Configuration.UI_MODE_NIGHT_YES, showBackground = true)
