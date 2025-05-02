@@ -94,8 +94,9 @@ fun KeuanganScreen(navController: NavHostController, authViewModel: AuthViewMode
                     )
                 }
             }
-        }
+        },
     ) { innerPadding ->
+        //Belum diperbaiki untuk tampilan anggota
         if (isUserLoggedIn && !isUserProfileLoading) {
             when (userRole) {
                 "admin" -> {
@@ -204,7 +205,7 @@ fun CardKeuangan(viewModel: KeuanganViewModel = viewModel(), selectedMonth: Int?
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .height(180.dp), // Tinggi ditambah untuk menampung informasi tambahan
+            .height(180.dp),
         shape = MaterialTheme.shapes.large,
         colors = CardDefaults.cardColors(containerColor = Color.White),
         elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
@@ -340,6 +341,7 @@ fun KeuanganAdminScreen(
     Column(modifier = modifier.fillMaxWidth().padding(16.dp)) {
         val monthIndex = if (selectedMonth.isEmpty()) null else months.indexOf(selectedMonth)
         CardKeuangan(viewModel = viewModel, selectedMonth = monthIndex)
+        Spacer(modifier = Modifier.height(16.dp))
         // Filter
         Row(
             modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),

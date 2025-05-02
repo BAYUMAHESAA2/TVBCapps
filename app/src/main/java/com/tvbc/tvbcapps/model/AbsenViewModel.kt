@@ -2,20 +2,17 @@ package com.tvbc.tvbcapps.model
 
 import android.content.Context
 import android.net.Uri
-import androidx.compose.runtime.State
-import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.cloudinary.android.MediaManager
 import com.cloudinary.android.callback.ErrorInfo
 import com.cloudinary.android.callback.UploadCallback
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
-import id.zelory.compressor.Compressor
+import com.google.firebase.firestore.Query
 import com.tvbc.tvbcapps.util.FileUtil
-import androidx.lifecycle.viewModelScope
-import com.google.firebase.Firebase
-import com.google.firebase.firestore.firestore
+import id.zelory.compressor.Compressor
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -238,33 +235,25 @@ class AbsenViewModel : ViewModel() {
         return calendar.get(Calendar.YEAR).toString()
     }
 
-    private val _isAbsenEnabled = mutableStateOf(false)
-    val isAbsenEnabled: State<Boolean> = _isAbsenEnabled
+    private val _absenList = MutableStateFlow<List<AbsenData>>(emptyList())
+    val absenList: StateFlow<List<AbsenData>> = _absenList
 
-    private val _isLoading = mutableStateOf(false)
-    val isLoading: State<Boolean> = _isLoading
+    fun loadAllAbsensi() {
+        FirebaseFirestore.getInstance().collection("absensi")
+            .orderBy("timestamp", Query.Direction.DESCENDING)
+            .get()
+            .addOnSuccessListener { result ->
+                val list = result.documents.mapNotNull { doc ->
+                    val fullName = doc.getString("fullName") ?: return@mapNotNull null
+                    val nim = doc.getString("nim") ?: return@mapNotNull null
+                    val jurusan = doc.getString("jurusan") ?: return@mapNotNull null
+                    val angkatan = doc.getString("angkatan") ?: return@mapNotNull null
+                    val date = doc.getString("date") ?: return@mapNotNull null
+                    val imageUrl = doc.getString("imageUrl") ?: return@mapNotNull null // ambil image URL
 
-    init {
-        setupFirestoreListener()
-    }
-
-    private fun setupFirestoreListener() {
-        Firebase.firestore.collection("settings").document("absen_button")
-            .addSnapshotListener { snapshot, error ->
-                if (error != null) return@addSnapshotListener
-                snapshot?.getBoolean("isEnabled")?.let { enabled ->
-                    _isAbsenEnabled.value = enabled
+                    AbsenData(fullName, nim, jurusan, angkatan, date, imageUrl)
                 }
+                _absenList.value = list
             }
     }
-
-    fun setAbsenEnabled(enabled: Boolean) {
-        _isLoading.value = true
-        Firebase.firestore.collection("settings").document("absen_button")
-            .set(mapOf("isEnabled" to enabled))
-            .addOnCompleteListener {
-                _isLoading.value = false
-            }
-    }
-
 }
