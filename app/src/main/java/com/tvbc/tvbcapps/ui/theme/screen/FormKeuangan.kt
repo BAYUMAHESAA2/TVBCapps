@@ -129,11 +129,11 @@ fun FormKeuangan(navController: NavHostController, authViewModel: AuthViewModel 
         if (isUserLoggedIn && !isUserProfileLoading) {
             when (userRole) {
                 "admin" -> {
-                    FormKeuanganAdmin(Modifier.padding(innerPadding))
+                    FormKeuanganAdmin(Modifier.padding(innerPadding),navController)
                 }
 
                 "user" -> {
-                    FormKeuanganAnggota(Modifier.padding(innerPadding))
+                    FormKeuanganAnggota(Modifier.padding(innerPadding),navController)
                 }
             }
         }
@@ -143,6 +143,7 @@ fun FormKeuangan(navController: NavHostController, authViewModel: AuthViewModel 
 @Composable
 fun FormKeuanganAnggota(
     modifier: Modifier = Modifier,
+    navController: NavHostController,
     viewModel: KeuanganViewModel = viewModel()
 ) {
     val context = LocalContext.current
@@ -203,7 +204,8 @@ fun FormKeuanganAnggota(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .padding(start = 16.dp, end = 16.dp),
+            .padding(start = 16.dp, end = 16.dp)
+            .verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         // Image for form
@@ -284,7 +286,8 @@ fun FormKeuanganAnggota(
         }
 
         Button(
-            onClick = { uploadImageToCloudinary() },
+            onClick = { uploadImageToCloudinary()
+                      navController.popBackStack()},
             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF660000)),
             modifier = Modifier
                 .fillMaxWidth()
@@ -311,6 +314,7 @@ fun FormKeuanganAnggota(
 @Composable
 fun FormKeuanganAdmin(
     modifier: Modifier = Modifier,
+    navController: NavHostController,
     keuanganViewModel: KeuanganViewModel = viewModel()
 ) {
     var nominal by remember { mutableStateOf("") }
@@ -427,6 +431,7 @@ fun FormKeuanganAdmin(
                         isSubmitting = true
                         keuanganViewModel.recordExpense(nominal, keteranganPengeluaran)
                     }
+                    navController.popBackStack()
                 },
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF660000)),
                 modifier = Modifier
