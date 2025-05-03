@@ -412,7 +412,7 @@ fun FormKeuanganAdmin(
                 keyboardOptions = KeyboardOptions(
                     capitalization = KeyboardCapitalization.Sentences,
                     keyboardType = KeyboardType.Text,
-                    imeAction = ImeAction.Send
+                    imeAction = ImeAction.Done
                 ),
                 modifier = Modifier.fillMaxWidth()
             )

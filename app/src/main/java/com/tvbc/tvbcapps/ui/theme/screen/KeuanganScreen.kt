@@ -9,6 +9,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -22,8 +23,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ContentCopy
-import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.MonetizationOn
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -96,7 +95,6 @@ fun KeuanganScreen(navController: NavHostController, authViewModel: AuthViewMode
             }
         },
     ) { innerPadding ->
-        //Belum diperbaiki untuk tampilan anggota
         if (isUserLoggedIn && !isUserProfileLoading) {
             when (userRole) {
                 "admin" -> {
@@ -104,8 +102,7 @@ fun KeuanganScreen(navController: NavHostController, authViewModel: AuthViewMode
                 }
                 "user" -> {
                     ScreenContentKeuangan(
-                        modifier = Modifier.padding(innerPadding),
-                        navController
+                        modifier = Modifier.padding(innerPadding)
                     )
                 }
             }
@@ -115,75 +112,163 @@ fun KeuanganScreen(navController: NavHostController, authViewModel: AuthViewMode
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ScreenContentKeuangan(modifier: Modifier = Modifier, navController: NavHostController) {
-    var expanded by remember { mutableStateOf(false) }
+fun ScreenContentKeuangan(
+    modifier: Modifier = Modifier,
+    viewModel: KeuanganViewModel = viewModel(),
+) {
+    val listKeuangan by viewModel.listKeuangan.observeAsState(emptyList())
+    val context = LocalContext.current
+    var selectedMonth by remember { mutableStateOf("") }
+    var selectedType by remember { mutableStateOf("") }
 
-    val daftarBulan = listOf(
-        "Januari 2025",
-        "Februari 2025",
-        "Maret 2025",
-        "April 2025",
-        "Mei 2025",
-        "Juni 2025",
-        "Juli 2025",
-        "Agustus 2025",
-        "September 2025",
-        "Oktober 2025",
-        "November 2025",
-        "Desember 2025"
+    // Daftar bulan untuk dropdown
+    val months = listOf(
+        "", "Januari", "Februari", "Maret", "April",
+        "Mei", "Juni", "Juli", "Agustus",
+        "September", "Oktober", "November", "Desember"
     )
+    // Daftar tipe transaksi
+    val types = listOf("", "pemasukan", "pengeluaran")
 
-    var pilihBulan by remember { mutableStateOf("Pilih Bulan") }
+    LaunchedEffect(Unit) {
+        viewModel.fetchAllKeuangan()
+    }
+    // Filter data berdasarkan bulan dan tipe
+    val filteredData = listKeuangan.filter { item ->
+        val monthMatches = selectedMonth.isEmpty() ||
+                (item["month"] as? Int) == months.indexOf(selectedMonth)
+        val typeMatches = selectedType.isEmpty() ||
+                item["type"]?.toString().equals(selectedType, ignoreCase = true)
+        monthMatches && typeMatches
+    }
 
-    Box(
-        modifier = modifier
-            .fillMaxWidth()
-    ) {
-        CurvedBackground()
+    LaunchedEffect(selectedMonth) {
+        val monthIndex = if (selectedMonth.isEmpty()) null else months.indexOf(selectedMonth)
+        viewModel.setMonthFilter(monthIndex)
+    }
 
-        Column(
-            modifier = Modifier
-                .padding(16.dp)
+    CurvedBackground()
+    Column(modifier = modifier.fillMaxWidth().padding(16.dp)) {
+        val monthIndex = if (selectedMonth.isEmpty()) null else months.indexOf(selectedMonth)
+        CardKeuangan(viewModel = viewModel, selectedMonth = monthIndex)
+        Spacer(modifier = Modifier.height(16.dp))
+        // Filter
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Spacer(modifier = Modifier.height(25.dp))
-
-            CardKeuangan()
-
-            Spacer(modifier = Modifier.height(30.dp))
-
-            // Dropdown Bulan
-            ExposedDropdownMenuBox(
-                expanded = expanded,
-                onExpandedChange = { expanded = !expanded }
-            ) {
-                OutlinedTextField(
-                    value = pilihBulan,
-                    onValueChange = { pilihBulan = it },
-                    readOnly = true,
-                    trailingIcon = {
-                        Icon(
-                            imageVector = if (expanded) Icons.Filled.KeyboardArrowUp else Icons.Filled.KeyboardArrowDown,
-                            contentDescription = "Dropdown Arrow Icon",
-                        )
-                    },
-                    modifier = Modifier
-                        .menuAnchor()
-                        .fillMaxWidth(),
-                )
-
-                ExposedDropdownMenu(
+            // Filter Bulan
+            Box(modifier = Modifier.weight(1f).padding(end = 8.dp)) {
+                var expanded by remember { mutableStateOf(false) }
+                ExposedDropdownMenuBox(
                     expanded = expanded,
-                    onDismissRequest = { expanded = false },
+                    onExpandedChange = { expanded = !expanded }
                 ) {
-                    daftarBulan.forEach { bulanItem ->
-                        DropdownMenuItem(
-                            text = { Text(bulanItem) },
-                            onClick = {
-                                pilihBulan = bulanItem
-                                expanded = false
-                                navController.navigate(Screen.DetailKeuangan.route)
+                    OutlinedTextField(
+                        value = selectedMonth,
+                        onValueChange = {},
+                        readOnly = true,
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+                        label = { Text("Filter Bulan") },
+                        modifier = Modifier.fillMaxWidth().menuAnchor()
+                    )
+
+                    ExposedDropdownMenu(
+                        expanded = expanded,
+                        onDismissRequest = { expanded = false }
+                    ) {
+                        months.forEach { month ->
+                            DropdownMenuItem(
+                                text = { Text(month.ifEmpty { "Semua Bulan" }) },
+                                onClick = {
+                                    selectedMonth = month
+                                    expanded = false
+                                }
+                            )
+                        }
+                    }
+                }
+            }
+            // Filter Tipe
+            Box(modifier = Modifier.weight(1f).padding(start = 8.dp)) {
+                var expanded by remember { mutableStateOf(false) }
+                ExposedDropdownMenuBox(
+                    expanded = expanded,
+                    onExpandedChange = { expanded = !expanded }
+                ) {
+                    OutlinedTextField(
+                        value = selectedType,
+                        onValueChange = {},
+                        readOnly = true,
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+                        label = { Text("Filter Tipe") },
+                        modifier = Modifier.fillMaxWidth().menuAnchor()
+                    )
+
+                    ExposedDropdownMenu(
+                        expanded = expanded,
+                        onDismissRequest = { expanded = false }
+                    ) {
+                        types.forEach { type ->
+                            DropdownMenuItem(
+                                text = { Text(type.ifEmpty { "Semua Tipe" }) },
+                                onClick = {
+                                    selectedType = type
+                                    expanded = false
+                                }
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
+        LazyColumn(
+            contentPadding = PaddingValues(bottom = 84.dp)
+        ) {
+            items(filteredData) { item ->
+                Card(
+                    modifier = Modifier
+                        .padding(bottom = 16.dp)
+                        .fillMaxWidth(),
+                    elevation = CardDefaults.cardElevation(4.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color.White)
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text(text = "Nama: ${item["fullName"] ?: "-"}")
+                        Text(text = "Nominal: Rp ${item["nominal"] ?: "-"}")
+                        Text(text = "Tanggal: ${item["date"] ?: "-"}")
+
+                        item["keterangan"]?.toString()?.takeIf { it.isNotBlank() }?.let { keterangan ->
+                            Text(text = "Keterangan: $keterangan")
+                        }
+
+                        Text(text = "Tipe: ${item["type"] ?: "-"}")
+
+                        item["imageUrl"]?.toString()?.takeIf { it.isNotBlank() }?.let { url ->
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(text = "Link Bukti Bayar: ")
+                                IconButton(
+                                    onClick = {
+                                        val clipboardManager = androidx.core.content.ContextCompat.getSystemService(
+                                            context,
+                                            ClipboardManager::class.java
+                                        )
+                                        clipboardManager?.setPrimaryClip(
+                                            ClipData.newPlainText("Image URL", url)
+                                        )
+                                        Toast.makeText(context, "Link disalin", Toast.LENGTH_SHORT).show()
+                                    },
+                                    modifier = Modifier.size(24.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.ContentCopy,
+                                        contentDescription = "Salin link",
+                                        tint = Color.Gray
+                                    )
+                                }
                             }
-                        )
+                        }
                     }
                 }
             }
@@ -413,11 +498,13 @@ fun KeuanganAdminScreen(
             }
         }
 
-        LazyColumn {
+        LazyColumn(
+            contentPadding = PaddingValues(bottom = 84.dp)
+        ) {
             items(filteredData) { item ->
                 Card(
                     modifier = Modifier
-                        .padding(16.dp)
+                        .padding(bottom = 16.dp)
                         .fillMaxWidth(),
                     elevation = CardDefaults.cardElevation(4.dp),
                     colors = CardDefaults.cardColors(containerColor = Color.White)
