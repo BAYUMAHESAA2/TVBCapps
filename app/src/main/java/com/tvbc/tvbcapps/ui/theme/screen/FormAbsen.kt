@@ -15,7 +15,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CalendarMonth
@@ -97,7 +99,7 @@ fun FormAbsenScreen(navController: NavHostController) {
         }
     ) { innerPadding ->
         ScreenContentAbsenForm(
-            Modifier.padding(innerPadding)
+            Modifier.padding(innerPadding),navController
         )
     }
 }
@@ -106,6 +108,7 @@ fun FormAbsenScreen(navController: NavHostController) {
 @Composable
 fun ScreenContentAbsenForm(
     modifier: Modifier = Modifier,
+    navController: NavHostController,
     viewModel: AbsenViewModel = viewModel()
 ) {
     val context = LocalContext.current
@@ -187,7 +190,8 @@ fun ScreenContentAbsenForm(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .padding(start = 16.dp, end = 16.dp),
+            .padding(start = 16.dp, end = 16.dp)
+            .verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         // Gambar form
@@ -287,7 +291,8 @@ fun ScreenContentAbsenForm(
         }
 
         Button(
-            onClick = { uploadImageToCloudinary() },
+            onClick = { uploadImageToCloudinary()
+                      navController.popBackStack()},
             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF660000)),
             modifier = Modifier
                 .fillMaxWidth()
