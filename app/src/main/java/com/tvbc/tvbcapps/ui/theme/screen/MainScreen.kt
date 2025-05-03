@@ -1,10 +1,13 @@
 package com.tvbc.tvbcapps.ui.theme.screen
 
 import android.content.res.Configuration
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -45,7 +48,11 @@ import com.tvbc.tvbcapps.component.TopBar
 import com.tvbc.tvbcapps.model.AuthViewModel
 import com.tvbc.tvbcapps.navigation.Screen
 import com.tvbc.tvbcapps.ui.theme.TVBCappsTheme
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun MainScreen(navController: NavHostController) {
     val viewModel: AuthViewModel = viewModel()
@@ -65,18 +72,22 @@ fun MainScreen(navController: NavHostController) {
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun ScreenContent(modifier: Modifier = Modifier, navController: NavHostController) {
     val isButtonEnabled = remember { mutableStateOf(false) }
 
+    // Format tanggal hanya sekali
+    val currentDateFormatted = remember {
+        val locale = Locale("id", "ID")
+        val formatter = DateTimeFormatter.ofPattern("EEEE, dd MMMM yyyy", locale)
+        LocalDate.now().format(formatter)
+    }
+
     LaunchedEffect(Unit) {
         Firebase.firestore.collection("settings").document("absen_button")
             .addSnapshotListener { snapshot, error ->
-                if (error != null) {
-                    // Handle error
-                    return@addSnapshotListener
-                }
-
+                if (error != null) return@addSnapshotListener
                 if (snapshot != null && snapshot.exists()) {
                     isButtonEnabled.value = snapshot.getBoolean("isEnabled") == true
                 }
@@ -106,7 +117,7 @@ fun ScreenContent(modifier: Modifier = Modifier, navController: NavHostControlle
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp)
-                        .height(150.dp),
+                        .height(200.dp),
                     shape = MaterialTheme.shapes.medium,
                     elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
                     colors = CardDefaults.cardColors(containerColor = Color.White)
@@ -124,7 +135,29 @@ fun ScreenContent(modifier: Modifier = Modifier, navController: NavHostControlle
                                 style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                                 color = Color.Black
                             )
-                            Spacer(modifier = Modifier.height(60.dp))
+
+                            if (isButtonEnabled.value) {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(top = 8.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Text(
+                                        text = currentDateFormatted,
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = Color.DarkGray
+                                    )
+                                    Text(
+                                        text = "14.00 - 18.00",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = Color.DarkGray
+                                    )
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.height(45.dp))
+
                             Button(
                                 onClick = {
                                     if (isButtonEnabled.value) {
@@ -139,11 +172,12 @@ fun ScreenContent(modifier: Modifier = Modifier, navController: NavHostControlle
                                 enabled = isButtonEnabled.value
                             ) {
                                 Text(
-                                    text = if (isButtonEnabled.value) "Absen" else "Absen (Non-aktif)",
+                                    text = if (isButtonEnabled.value) "Absen" else "Absen Tidak Tersedia",
                                     style = MaterialTheme.typography.bodyLarge,
                                 )
                             }
                         }
+
                         Image(
                             painter = painterResource(id = R.drawable.logovollycard),
                             contentDescription = null,
@@ -177,7 +211,7 @@ fun ScreenContent(modifier: Modifier = Modifier, navController: NavHostControlle
     }
 }
 
-
+@RequiresApi(Build.VERSION_CODES.O)
 @Preview(showBackground = true)
 @Preview(uiMode = Configuration.UI_MODE_NIGHT_YES, showBackground = true)
 @Composable
