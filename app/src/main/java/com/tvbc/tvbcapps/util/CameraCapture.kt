@@ -18,29 +18,33 @@ fun rememberCameraCaptureLauncher(
     val cameraLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.TakePicture()
     ) { success ->
-        val currentUri = photoUri
-        if (success && currentUri != null) {
-            onImageCaptured(currentUri)
+        if (success && photoUri != null) {
+            onImageCaptured(photoUri)
         } else {
             onImageCaptured(null)
         }
     }
 
     val launchCamera: () -> Unit = {
-        val photoFile = File.createTempFile("absen_", ".jpg", context.cacheDir).apply {
-            createNewFile()
-            deleteOnExit()
+        try {
+            val photoFile = File.createTempFile("absen_", ".jpg", context.cacheDir).apply {
+                createNewFile()
+                deleteOnExit()
+            }
+
+            val uri = FileProvider.getUriForFile(
+                context,
+                "${context.packageName}.provider",
+                photoFile
+            )
+
+            photoUri = uri
+            cameraLauncher.launch(uri)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            // Tampilkan pesan error ke pengguna jika perlu
+            onImageCaptured(null)
         }
-
-        val uri = FileProvider.getUriForFile(
-            context,
-            "${context.packageName}.provider",
-            photoFile
-        )
-
-        photoUri = uri
-        cameraLauncher.launch(uri)
     }
-
     return Pair(photoUri, launchCamera)
 }

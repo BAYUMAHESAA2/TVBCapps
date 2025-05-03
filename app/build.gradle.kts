@@ -55,6 +55,17 @@ dependencies {
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
     implementation(libs.androidx.navigation.compose)
+
+    // Firebase - gunakan Firebase BOM untuk mengelola versi dengan konsisten
+    implementation(platform("com.google.firebase:firebase-bom:32.7.2"))
+    implementation("com.google.firebase:firebase-auth")
+    implementation("com.google.firebase:firebase-database-ktx")
+    implementation("com.google.firebase:firebase-storage-ktx")
+    implementation("com.google.firebase:firebase-firestore")
+    implementation ("com.google.accompanist:accompanist-permissions:0.32.0")
+
+
+    // Coroutine untuk firebase task
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.3")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7")
 
@@ -64,6 +75,7 @@ dependencies {
     // Keep these as they are
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.8.7")
     implementation("io.coil-kt:coil-compose:2.4.0")
+    implementation ("androidx.compose.material:material-icons-extended:1.7.8")
     implementation("androidx.compose.material:material-icons-extended:1.6.1")
 
     implementation("com.cloudinary:cloudinary-android:2.3.1")

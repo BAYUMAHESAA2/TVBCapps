@@ -54,12 +54,14 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import coil.compose.rememberAsyncImagePainter
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.isGranted
+import com.google.accompanist.permissions.rememberPermissionState
 import com.tvbc.tvbcapps.R
 import com.tvbc.tvbcapps.model.AbsenViewModel
 import com.tvbc.tvbcapps.ui.theme.TVBCappsTheme
 import com.tvbc.tvbcapps.util.rememberCameraCaptureLauncher
 import java.util.Calendar
-
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -100,6 +102,7 @@ fun FormAbsenScreen(navController: NavHostController) {
     }
 }
 
+@OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun ScreenContentAbsenForm(
     modifier: Modifier = Modifier,
@@ -111,24 +114,21 @@ fun ScreenContentAbsenForm(
     var isUploading by remember { mutableStateOf(false) }
     var uploadStatus by remember { mutableStateOf("") }
 
-    // Permission handling
-    val permissionsToRequest = remember {
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
-            arrayOf(android.Manifest.permission.CAMERA, android.Manifest.permission.READ_MEDIA_IMAGES)
-        } else {
-            arrayOf(android.Manifest.permission.CAMERA, android.Manifest.permission.READ_EXTERNAL_STORAGE)
-        }
+    val cameraPermissionState = rememberPermissionState(android.Manifest.permission.CAMERA)
+
+    val (_,launchCamera) = rememberCameraCaptureLauncher(context) {
+        selectedImageUri = it
     }
 
     val permissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { permissions ->
         val allGranted = permissions.all { it.value }
-        if (allGranted) {
+        uploadStatus = if (allGranted) {
             // Permissions granted, proceed with action
-            uploadStatus = ""
+            ""
         } else {
-            uploadStatus = "Izin diperlukan untuk menggunakan fitur ini"
+            "Izin diperlukan untuk menggunakan fitur ini"
         }
     }
 
@@ -141,10 +141,6 @@ fun ScreenContentAbsenForm(
         }
     }
 
-    val (_, launchCamera) = rememberCameraCaptureLauncher(context) {
-        selectedImageUri = it
-    }
-
     // Function to check permissions and launch image picker
     fun launchImagePicker() {
         permissionLauncher.launch(
@@ -155,12 +151,6 @@ fun ScreenContentAbsenForm(
             }
         )
         imagePickerLauncher.launch("image/*")
-    }
-
-    // Function to check permissions and launch camera
-    fun checkPermissionsAndLaunchCamera() {
-        permissionLauncher.launch(permissionsToRequest)
-        launchCamera()
     }
 
     val calendar = Calendar.getInstance()
@@ -267,7 +257,13 @@ fun ScreenContentAbsenForm(
         Text(stringResource(R.string.atau))
 
         Button(
-            onClick = { checkPermissionsAndLaunchCamera() },
+            onClick = {
+                if (cameraPermissionState.status.isGranted) {
+                    launchCamera()
+                } else {
+                    cameraPermissionState.launchPermissionRequest()
+                }
+            },
             colors = ButtonDefaults.buttonColors(containerColor = Color.Gray),
             modifier = Modifier
                 .fillMaxWidth()
@@ -311,7 +307,6 @@ fun ScreenContentAbsenForm(
         }
     }
 }
-
 
 @Preview(showBackground = true)
 @Composable
