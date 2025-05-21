@@ -1,5 +1,7 @@
 package com.tvbc.tvbcapps.navigation
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -22,9 +24,9 @@ import com.tvbc.tvbcapps.ui.theme.screen.NotifikasiScreen
 import com.tvbc.tvbcapps.ui.theme.screen.ProfilScreen
 import com.tvbc.tvbcapps.ui.theme.screen.RegisterScreen
 import com.tvbc.tvbcapps.ui.theme.screen.TentangAplikasiScreen
-import com.tvbc.tvbcapps.ui.theme.screen.DetailKeuanganScreen
 import com.tvbc.tvbcapps.ui.theme.screen.FormKeuangan
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun SetupNavGraph(
     navController: NavHostController = rememberNavController(),
@@ -92,9 +94,6 @@ fun SetupNavGraph(
         }
         composable(route = Screen.FormAbsen.route) {
             FormAbsenScreen(navController)
-        }
-        composable(route = Screen.DetailKeuangan.route) {
-            DetailKeuanganScreen(navController)
         }
         composable(route = Screen.FormKeuangan.route) {
             FormKeuangan(navController)
