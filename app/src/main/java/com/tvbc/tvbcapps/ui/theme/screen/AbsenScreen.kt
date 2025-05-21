@@ -64,6 +64,8 @@ import android.content.ClipboardManager
 import android.content.Context
 import android.os.Build
 import androidx.annotation.RequiresApi
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material3.DropdownMenu
 import java.time.LocalDate
@@ -112,6 +114,9 @@ fun ScreenContentAbsen(
     val jumlahTidakHadir by absenViewModel.jumlahTidakHadir.collectAsState()
     val selectedMonth by absenViewModel.selectedMonth.collectAsState()
 
+    // Konstanta untuk total kehadiran per bulan
+    val totalKehadiranPerBulan = 8
+
     LaunchedEffect(Unit) {
         absenViewModel.loadJumlahHadir()
     }
@@ -152,7 +157,11 @@ fun ScreenContentAbsen(
     val namaUser = userProfile?.fullName?.takeIf { it.isNotBlank() } ?: "Nama tidak tersedia"
     val nimUser = userProfile?.nim?.takeIf { it.isNotBlank() } ?: "NIM belum dilengkapi"
 
-    Column(modifier = modifier.padding(horizontal = 16.dp)) {
+    Column(
+        modifier = modifier
+            .padding(horizontal = 16.dp)
+            .verticalScroll(rememberScrollState())
+    ) {
         Card(
             modifier = Modifier
                 .padding(top = 20.dp)
@@ -227,7 +236,6 @@ fun ScreenContentAbsen(
                         onClick = {
                             pilihBulan = bulanItem
                             expanded = false
-                            // Update the attendance count for the selected month
                             absenViewModel.setSelectedMonth(bulanItem, currentYear)
                         }
                     )
@@ -235,13 +243,20 @@ fun ScreenContentAbsen(
             }
         }
 
+        RiwayatPresensiCard(hadir = jumlahHadir, tidakHadir = jumlahTidakHadir)
+
         Text(
             text = "Absensi bulan $pilihBulan $currentYear",
             style = MaterialTheme.typography.bodyMedium,
             modifier = Modifier.padding(top = 8.dp, start = 8.dp)
         )
 
-        RiwayatPresensiCard(hadir = jumlahHadir, tidakHadir = jumlahTidakHadir)
+        // Tampilkan grafik pie chart
+        AbsensiPieChart(
+            hadir = jumlahHadir,
+            totalKehadiran = totalKehadiranPerBulan,
+            modifier = Modifier.padding(top = 12.dp)
+        )
     }
 }
 
