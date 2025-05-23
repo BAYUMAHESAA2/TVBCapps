@@ -99,7 +99,7 @@ fun FormAbsenScreen(navController: NavHostController) {
         }
     ) { innerPadding ->
         ScreenContentAbsenForm(
-            Modifier.padding(innerPadding),navController
+            Modifier.padding(innerPadding), navController
         )
     }
 }
@@ -119,7 +119,7 @@ fun ScreenContentAbsenForm(
 
     val cameraPermissionState = rememberPermissionState(android.Manifest.permission.CAMERA)
 
-    val (_,launchCamera) = rememberCameraCaptureLauncher(context) {
+    val (_, launchCamera) = rememberCameraCaptureLauncher(context) {
         selectedImageUri = it
     }
 
@@ -180,10 +180,17 @@ fun ScreenContentAbsenForm(
         isUploading = true
         uploadStatus = "Mengunggah..."
 
-        // Proses upload ke Cloudinary dengan viewModel
         viewModel.uploadImage(context, selectedImageUri!!, selectedDate) { success, message ->
             isUploading = false
-            uploadStatus = if (success) "Berhasil diunggah!" else "Gagal: $message"
+            if (success) {
+                navController.previousBackStackEntry
+                    ?.savedStateHandle
+                    ?.set("upload_success", true)
+
+                navController.popBackStack() // kembali ke KeuanganScreen
+            } else {
+                uploadStatus = "Gagal: $message"
+            }
         }
     }
 
@@ -205,12 +212,12 @@ fun ScreenContentAbsenForm(
 
         OutlinedTextField(
             value = selectedDate,
-            onValueChange = { selectedDate = it},
+            onValueChange = { selectedDate = it },
             readOnly = true,
             label = { Text(stringResource(R.string.tanggal)) },
             trailingIcon = {
                 IconButton(
-                    onClick = {datePickerDialog.show()}
+                    onClick = { datePickerDialog.show() }
                 ) {
                     Icon(
                         Icons.Filled.CalendarMonth,
@@ -225,7 +232,7 @@ fun ScreenContentAbsenForm(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        Box (
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(150.dp)
@@ -242,10 +249,10 @@ fun ScreenContentAbsenForm(
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.Crop,
                 )
-            }else{
-                Column (
+            } else {
+                Column(
                     horizontalAlignment = Alignment.CenterHorizontally
-                ){
+                ) {
                     Icon(
                         Icons.Default.Image,
                         contentDescription = null,
@@ -291,8 +298,15 @@ fun ScreenContentAbsenForm(
         }
 
         Button(
-            onClick = { uploadImageToCloudinary()
-                      navController.popBackStack()},
+            onClick = {
+                uploadImageToCloudinary()
+                if (!isUploading) {
+                    navController.previousBackStackEntry
+                        ?.savedStateHandle
+                        ?.set("upload_success", true)
+                    navController.popBackStack()
+                }
+            },
             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF660000)),
             modifier = Modifier
                 .fillMaxWidth()
@@ -306,7 +320,11 @@ fun ScreenContentAbsenForm(
                     color = Color.White
                 )
             } else {
-                Text(stringResource(R.string.kirim), color = Color.White, fontWeight = FontWeight.Bold)
+                Text(
+                    stringResource(R.string.kirim),
+                    color = Color.White,
+                    fontWeight = FontWeight.Bold
+                )
             }
         }
     }

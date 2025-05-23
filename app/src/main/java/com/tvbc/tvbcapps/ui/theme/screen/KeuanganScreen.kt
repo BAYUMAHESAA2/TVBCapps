@@ -24,11 +24,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
+import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MonetizationOn
 import androidx.compose.material3.Card
@@ -179,9 +178,11 @@ fun ScreenContentKeuangan(
     }
 
     CurvedBackground()
-    Column(modifier = modifier
-        .fillMaxWidth()
-        .padding(16.dp)) {
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(16.dp)
+    ) {
         val monthIndex = if (selectedMonth.isEmpty()) null else months.indexOf(selectedMonth)
         CardKeuangan(viewModel = viewModel, selectedMonth = monthIndex)
 
@@ -195,9 +196,11 @@ fun ScreenContentKeuangan(
             verticalAlignment = Alignment.CenterVertically
         ) {
             // Filter Bulan
-            Box(modifier = Modifier
-                .weight(1f)
-                .padding(end = 8.dp)) {
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(end = 8.dp)
+            ) {
                 var expanded by remember { mutableStateOf(false) }
                 ExposedDropdownMenuBox(
                     expanded = expanded,
@@ -230,9 +233,11 @@ fun ScreenContentKeuangan(
                 }
             }
             // Filter Tipe
-            Box(modifier = Modifier
-                .weight(1f)
-                .padding(start = 8.dp)) {
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(start = 8.dp)
+            ) {
                 var expanded by remember { mutableStateOf(false) }
                 ExposedDropdownMenuBox(
                     expanded = expanded,
@@ -532,14 +537,15 @@ fun GridScreenContent(
     filteredData: List<Map<String, Any>>,
     modifier: Modifier = Modifier
 ) {
-    LazyVerticalGrid(
-        columns = GridCells.Fixed(2),
+    LazyVerticalStaggeredGrid(
+        columns = StaggeredGridCells.Fixed(2),
         contentPadding = PaddingValues(8.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
+        verticalItemSpacing = 8.dp,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         modifier = modifier
     ) {
-        items(filteredData) { item ->
+        items(filteredData.size) { index ->
+            val item = filteredData[index]
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 elevation = CardDefaults.cardElevation(4.dp),
@@ -559,7 +565,8 @@ fun GridScreenContent(
                     Text(
                         "Tipe: ${
                             item["type"]?.toString()?.replaceFirstChar { it.uppercase() } ?: "-"
-                        }")
+                        }"
+                    )
                 }
             }
         }
