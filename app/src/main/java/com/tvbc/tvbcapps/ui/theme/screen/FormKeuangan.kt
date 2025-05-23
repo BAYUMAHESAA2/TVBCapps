@@ -194,10 +194,17 @@ fun FormKeuanganAnggota(
         isUploading = true
         uploadStatus = "Mengunggah..."
 
-        // Process upload to Cloudinary with viewModel
         viewModel.uploadImage(context, selectedImageUri!!, nominal) { success, message ->
             isUploading = false
-            uploadStatus = if (success) "Berhasil diunggah!" else "Gagal: $message"
+            uploadStatus = if (success) {
+                navController.previousBackStackEntry
+                    ?.savedStateHandle
+                    ?.set("upload_success", true)
+                navController.popBackStack()
+                "Berhasil diunggah!"
+            } else {
+                "Gagal: $message"
+            }
         }
     }
 
@@ -286,8 +293,15 @@ fun FormKeuanganAnggota(
         }
 
         Button(
-            onClick = { uploadImageToCloudinary()
-                      navController.popBackStack()},
+            onClick = {
+                uploadImageToCloudinary()
+                if (!isUploading) {
+                    navController.previousBackStackEntry
+                        ?.savedStateHandle
+                        ?.set("upload_success", true)
+                    navController.popBackStack()
+                }
+            },
             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF660000)),
             modifier = Modifier
                 .fillMaxWidth()

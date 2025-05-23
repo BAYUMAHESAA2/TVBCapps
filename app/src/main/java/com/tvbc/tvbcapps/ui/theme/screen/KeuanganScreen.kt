@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.res.Configuration
 import android.net.Uri
+import android.widget.Toast
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -80,6 +81,7 @@ enum class ViewMode {
 
 @Composable
 fun KeuanganScreen(navController: NavHostController, authViewModel: AuthViewModel = viewModel()) {
+    val context = LocalContext.current
     val isUserLoggedIn = authViewModel.isUserLoggedIn()
     val isUserProfileLoading by authViewModel.isUserProfileLoading.collectAsState()
     val viewModel: AuthViewModel = viewModel()
@@ -91,6 +93,19 @@ fun KeuanganScreen(navController: NavHostController, authViewModel: AuthViewMode
             ViewMode.LIST -> ViewMode.TABLE
             ViewMode.TABLE -> ViewMode.GRID
             ViewMode.GRID -> ViewMode.LIST
+        }
+    }
+
+    val shouldShowToast = navController
+        .currentBackStackEntry
+        ?.savedStateHandle
+        ?.getLiveData<Boolean>("upload_success")
+        ?.observeAsState()
+
+    LaunchedEffect(shouldShowToast?.value) {
+        if (shouldShowToast?.value == true) {
+            Toast.makeText(context, "Data iuran berhasil dikirim", Toast.LENGTH_SHORT).show()
+            navController.currentBackStackEntry?.savedStateHandle?.remove<Boolean>("upload_success")
         }
     }
 
