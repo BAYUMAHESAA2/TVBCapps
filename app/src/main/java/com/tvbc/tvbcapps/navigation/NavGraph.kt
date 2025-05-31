@@ -25,6 +25,7 @@ import com.tvbc.tvbcapps.ui.theme.screen.ProfilScreen
 import com.tvbc.tvbcapps.ui.theme.screen.RegisterScreen
 import com.tvbc.tvbcapps.ui.theme.screen.TentangAplikasiScreen
 import com.tvbc.tvbcapps.ui.theme.screen.FormKeuangan
+import com.tvbc.tvbcapps.ui.theme.screen.SplashScreen
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
@@ -59,7 +60,7 @@ fun SetupNavGraph(
 
     NavHost(
         navController = navController,
-        startDestination = Screen.LandingPage.route
+        startDestination = Screen.SplashScreen.route
     ) {
         composable(route = Screen.LandingPage.route) {
             LandingPageScreen(navController)
@@ -99,6 +100,9 @@ fun SetupNavGraph(
         }
         composable(route = Screen.AdminHomeScreen.route) {
             AdminHomeScreen(navController)
+        }
+        composable(route = Screen.SplashScreen.route) {
+            SplashScreen(navController)
         }
     }
 }
