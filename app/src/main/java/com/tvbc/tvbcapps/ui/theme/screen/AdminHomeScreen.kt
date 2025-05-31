@@ -134,7 +134,7 @@ fun ScreenContentAdminHome(innerPadding: PaddingValues, viewModel: AuthViewModel
             .padding(16.dp)
     ) {
         Text(
-            text = "Daftar Pengguna",
+            text = "Daftar Anggota",
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Bold,
             modifier = Modifier.padding(bottom = 16.dp)

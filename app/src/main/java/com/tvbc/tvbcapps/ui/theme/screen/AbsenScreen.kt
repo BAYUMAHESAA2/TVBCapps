@@ -1,9 +1,12 @@
 package com.tvbc.tvbcapps.ui.theme.screen
 
-import android.content.ClipData
+import android.content.Intent
 import android.content.res.Configuration
-import android.widget.Toast
+import android.net.Uri
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,15 +16,17 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
@@ -59,16 +64,8 @@ import com.tvbc.tvbcapps.component.TopBar
 import com.tvbc.tvbcapps.model.AbsenViewModel
 import com.tvbc.tvbcapps.model.AuthViewModel
 import com.tvbc.tvbcapps.ui.theme.TVBCappsTheme
-import java.util.Calendar
-import android.content.ClipboardManager
-import android.content.Context
-import android.os.Build
-import androidx.annotation.RequiresApi
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.filled.ArrowDropDown
-import androidx.compose.material3.DropdownMenu
 import java.time.LocalDate
+import java.util.Calendar
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
@@ -447,34 +444,25 @@ fun AbsenAdmin(
                         Text("Angkatan: ${absen.angkatan}")
                         Text("Tanggal: ${absen.date}")
 
-                        if (absen.imageUrl.isNotBlank()) {
+                        absen.imageUrl.takeIf { it.isNotBlank() }?.let { url ->
                             Spacer(modifier = Modifier.height(8.dp))
                             Row(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Text("Link Bukti Absen: ")
-                                IconButton(
-                                    onClick = {
-                                        val clipboardManager = context.getSystemService(
-                                            Context.CLIPBOARD_SERVICE
-                                        ) as ClipboardManager
-                                        clipboardManager.setPrimaryClip(
-                                            ClipData.newPlainText("Image URL", absen.imageUrl)
-                                        )
-                                        Toast.makeText(
-                                            context,
-                                            "Link disalin",
-                                            Toast.LENGTH_SHORT
-                                        ).show()
-                                    },
-                                    modifier = Modifier.size(24.dp)
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.ContentCopy,
-                                        contentDescription = "Salin link",
-                                        tint = Color.Gray
-                                    )
-                                }
+                                Text(
+                                    text = "Bukti: ",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = Color.Gray
+                                )
+                                Text(
+                                    text = "Lihat Bukti",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = Color.Blue,
+                                    modifier = Modifier.clickable {
+                                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+                                        context.startActivity(intent)
+                                    }
+                                )
                             }
                         }
                     }

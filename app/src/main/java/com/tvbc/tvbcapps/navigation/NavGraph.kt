@@ -52,7 +52,6 @@ fun SetupNavGraph(
                     }
                 }
                 else -> {
-                    // mencegah error apabila role tidak terdeteksi
                 }
             }
         }

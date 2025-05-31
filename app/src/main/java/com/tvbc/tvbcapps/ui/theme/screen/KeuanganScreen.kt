@@ -537,6 +537,8 @@ fun GridScreenContent(
     filteredData: List<Map<String, Any>>,
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
+
     LazyVerticalStaggeredGrid(
         columns = StaggeredGridCells.Fixed(2),
         contentPadding = PaddingValues(8.dp),
@@ -567,6 +569,26 @@ fun GridScreenContent(
                             item["type"]?.toString()?.replaceFirstChar { it.uppercase() } ?: "-"
                         }"
                     )
+
+                    item["imageUrl"]?.toString()?.takeIf { it.isNotBlank() }?.let { url ->
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                text = "Bukti: ",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = Color.Gray
+                            )
+                            Text(
+                                text = "Lihat Bukti",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = Color.Blue,
+                                modifier = Modifier.clickable {
+                                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+                                    context.startActivity(intent)
+                                }
+                            )
+                        }
+                    }
                 }
             }
         }
