@@ -17,6 +17,8 @@ import com.cloudinary.android.callback.UploadCallback
 import com.tvbc.tvbcapps.util.FileUtilProfil
 import id.zelory.compressor.Compressor
 import kotlinx.coroutines.launch
+import com.google.firebase.auth.FirebaseAuthInvalidUserException
+import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
 
 class AuthViewModel : ViewModel() {
     private val auth = FirebaseAuth.getInstance()
@@ -47,6 +49,10 @@ class AuthViewModel : ViewModel() {
     private val _isLoadingAllUsers = MutableStateFlow(true)
     val isLoadingAllUsers: StateFlow<Boolean> = _isLoadingAllUsers.asStateFlow()
 
+    // NEW: State untuk reset password
+    private val _resetPasswordState = MutableStateFlow<AuthState>(AuthState.Idle)
+    val resetPasswordState: StateFlow<AuthState> = _resetPasswordState.asStateFlow()
+
     init {
         auth.currentUser?.let { fetchUserProfile(it.uid) }
     }
@@ -58,21 +64,19 @@ class AuthViewModel : ViewModel() {
             val result = auth.createUserWithEmailAndPassword(email, password).await()
 
             result.user?.let { user ->
-                try {
-                    val newUser = UserModel(
-                        uid = user.uid,
-                        fullName = fullName,
-                        email = email,
-                        role = "user" // Default role for new users
-                    )
-                    usersCollection.document(user.uid).set(newUser).await()
-                } catch (firestoreError: Exception) {
-                    Log.e(
-                        "AuthViewModel",
-                        "Firestore profile creation failed: ${firestoreError.message}"
-                    )
-                }
+                // Kirim email verifikasi
+                user.sendEmailVerification().await()
+
+                // Simpan data ke Firestore
+                val newUser = UserModel(
+                    uid = user.uid,
+                    fullName = fullName,
+                    email = email,
+                    role = "user"
+                )
+                usersCollection.document(user.uid).set(newUser).await()
             }
+
             _registerState.value = AuthState.Success
         } catch (e: Exception) {
             _registerState.value = AuthState.Error(e.message ?: "Registration failed")
@@ -86,15 +90,21 @@ class AuthViewModel : ViewModel() {
             val result = auth.signInWithEmailAndPassword(email, password).await()
 
             result.user?.let { user ->
-                // Fetch user info from Firestore
-                val userDoc = usersCollection.document(user.uid).get().await()
+                // Cek verifikasi email, kecuali untuk tvbc@gmail.com
+                val isEmailVerified = user.isEmailVerified || user.email == "tvbc@gmail.com"
+                if (!isEmailVerified) {
+                    auth.signOut() // keluarin user yang belum verifikasi
+                    _loginState.value = AuthState.Error("Silakan verifikasi email kamu terlebih dahulu.")
+                    return
+                }
 
+                // Fetch user info dari Firestore
+                val userDoc = usersCollection.document(user.uid).get().await()
                 if (userDoc.exists()) {
                     val userProfile = userDoc.toObject(UserModel::class.java)
                     _userProfile.value = userProfile
                     _userRole.value = userProfile?.role ?: "user"
                 } else {
-                    // Create a default user profile if it doesn't exist
                     val defaultUser = UserModel(
                         uid = user.uid,
                         email = email,
@@ -245,6 +255,30 @@ class AuthViewModel : ViewModel() {
             .addOnFailureListener { e ->
                 callback(false, "Gagal memperbarui foto profil: ${e.message}")
             }
+    }
+
+    // NEW: Function untuk reset password
+    fun sendPasswordResetEmail(email: String) {
+        _resetPasswordState.value = AuthState.Loading
+
+        auth.sendPasswordResetEmail(email)
+            .addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    _resetPasswordState.value = AuthState.Success
+                } else {
+                    val errorMessage = when (task.exception) {
+                        is FirebaseAuthInvalidUserException -> "Email tidak terdaftar"
+                        is FirebaseAuthInvalidCredentialsException -> "Format email tidak valid"
+                        else -> task.exception?.message ?: "Gagal mengirim email reset password"
+                    }
+                    _resetPasswordState.value = AuthState.Error(errorMessage)
+                }
+            }
+    }
+
+    // NEW: Function untuk reset state reset password
+    fun resetPasswordState() {
+        _resetPasswordState.value = AuthState.Idle
     }
 
     fun resetStates() {

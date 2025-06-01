@@ -26,6 +26,7 @@ import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -34,6 +35,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -85,6 +87,7 @@ fun RegisterScreenContent(
     var confirmPassword by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
+    var showVerificationDialog by remember { mutableStateOf(false) }
 
     val registerState by viewModel.registerState.collectAsState()
     val scope = rememberCoroutineScope()
@@ -95,9 +98,7 @@ fun RegisterScreenContent(
             is AuthState.Loading -> isLoading = true
             is AuthState.Success -> {
                 isLoading = false
-                navController.navigate(Screen.Login.route) {
-                    popUpTo(Screen.Register.route) { inclusive = true }
-                }
+                showVerificationDialog = true // <-- Tampilkan dialog
                 viewModel.resetStates()
             }
             is AuthState.Error -> {
@@ -106,6 +107,26 @@ fun RegisterScreenContent(
             }
             else -> {}
         }
+    }
+
+    if (showVerificationDialog) {
+        AlertDialog(
+            onDismissRequest = { showVerificationDialog = false },
+            confirmButton = {
+                TextButton(onClick = {
+                    showVerificationDialog = false
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(Screen.Register.route) { inclusive = true }
+                    }
+                }) {
+                    Text("OK")
+                }
+            },
+            title = { Text("Verifikasi Email Diperlukan") },
+            text = {
+                Text("Silakan cek email kamu dan klik tautan verifikasi untuk mengaktifkan akun.")
+            }
+        )
     }
 
     Column(

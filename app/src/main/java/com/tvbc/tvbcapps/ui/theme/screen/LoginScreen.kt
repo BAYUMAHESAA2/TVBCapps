@@ -25,6 +25,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -33,6 +34,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -81,9 +83,12 @@ fun LoginScreenContent(
     var password by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
+    var showForgetPasswordDialog by remember { mutableStateOf(false) }
+    var resetEmailSent by remember { mutableStateOf(false) }
 
     val loginState by viewModel.loginState.collectAsState()
     val userRole by viewModel.userRole.collectAsState()
+    val resetPasswordState by viewModel.resetPasswordState.collectAsState()
     val scope = rememberCoroutineScope()
 
     // Observasi state login
@@ -108,6 +113,22 @@ fun LoginScreenContent(
             is AuthState.Error -> {
                 isLoading = false
                 errorMessage = (loginState as AuthState.Error).message
+            }
+            else -> {}
+        }
+    }
+
+    // Observasi state reset password
+    LaunchedEffect(resetPasswordState) {
+        when (resetPasswordState) {
+            is AuthState.Success -> {
+                resetEmailSent = true
+                showForgetPasswordDialog = false
+                viewModel.resetPasswordState()
+            }
+            is AuthState.Error -> {
+                errorMessage = (resetPasswordState as AuthState.Error).message
+                viewModel.resetPasswordState()
             }
             else -> {}
         }
@@ -181,6 +202,16 @@ fun LoginScreenContent(
             )
         }
 
+        // Success message untuk reset password
+        if (resetEmailSent) {
+            Text(
+                text = "Email reset password telah dikirim! Silakan cek email Anda.",
+                color = Color.Green,
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.padding(top = 4.dp)
+            )
+        }
+
         Box(
             modifier = Modifier
                 .fillMaxWidth(),
@@ -190,7 +221,7 @@ fun LoginScreenContent(
                 text = "Forget password?",
                 color = Color(0xFF660000),
                 modifier = Modifier.clickable {
-                    // Implementasi reset password nanti
+                    showForgetPasswordDialog = true
                 }
             )
         }
@@ -241,6 +272,7 @@ fun LoginScreenContent(
                     onClick = {
                         scope.launch {
                             errorMessage = null
+                            resetEmailSent = false
                             if (email.isNotBlank() && password.isNotBlank()) {
                                 viewModel.loginUser(email, password)
                             } else {
@@ -260,10 +292,95 @@ fun LoginScreenContent(
                         tint = Color.White
                     )
                 }
-
             }
         }
     }
+
+    // Dialog untuk forget password
+    if (showForgetPasswordDialog) {
+        ForgetPasswordDialog(
+            onDismiss = { showForgetPasswordDialog = false },
+            onSendResetEmail = { resetEmail ->
+                viewModel.sendPasswordResetEmail(resetEmail)
+            }
+        )
+    }
+}
+
+@Composable
+fun ForgetPasswordDialog(
+    onDismiss: () -> Unit,
+    onSendResetEmail: (String) -> Unit
+) {
+    var resetEmail by remember { mutableStateOf("") }
+    var isValidEmail by remember { mutableStateOf(true) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(
+                text = "Reset Password",
+                style = MaterialTheme.typography.headlineSmall
+            )
+        },
+        text = {
+            Column {
+                Text(
+                    text = "Masukkan email Anda untuk menerima link reset password",
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.padding(bottom = 16.dp)
+                )
+
+                OutlinedTextField(
+                    value = resetEmail,
+                    onValueChange = {
+                        resetEmail = it
+                        isValidEmail = android.util.Patterns.EMAIL_ADDRESS.matcher(it).matches()
+                    },
+                    label = { Text("Email") },
+                    singleLine = true,
+                    isError = !isValidEmail && resetEmail.isNotEmpty(),
+                    trailingIcon = {
+                        Icon(
+                            imageVector = Icons.Filled.Email,
+                            contentDescription = null
+                        )
+                    },
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Email,
+                        imeAction = ImeAction.Done
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                if (!isValidEmail && resetEmail.isNotEmpty()) {
+                    Text(
+                        text = "Format email tidak valid",
+                        color = Color.Red,
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.padding(top = 4.dp)
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    if (resetEmail.isNotBlank() && isValidEmail) {
+                        onSendResetEmail(resetEmail)
+                    }
+                },
+                enabled = resetEmail.isNotBlank() && isValidEmail
+            ) {
+                Text("Kirim", color = Color(0xFF660000))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Batal")
+            }
+        }
+    )
 }
 
 @Preview(showBackground = true)
