@@ -22,6 +22,7 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import com.google.firebase.Timestamp
+import kotlinx.coroutines.delay
 import java.util.Calendar
 import kotlin.math.abs
 
@@ -51,6 +52,18 @@ class KeuanganViewModel : ViewModel() {
     init {
         calculateTotalSaldo()
         calculateIncomeExpense()
+    }
+
+    fun refreshData() {
+        _isLoading.value = true
+
+        calculateTotalSaldo()
+        calculateIncomeExpense()
+        fetchAllKeuangan()
+
+        viewModelScope.launch {
+            delay(500)
+        }
     }
 
     //Fungsi untuk upload bukti bayar

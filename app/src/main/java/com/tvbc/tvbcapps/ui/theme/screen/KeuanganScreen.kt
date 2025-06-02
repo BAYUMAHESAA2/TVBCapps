@@ -30,6 +30,7 @@ import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MonetizationOn
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -39,6 +40,7 @@ import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -54,6 +56,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -297,94 +300,117 @@ fun CardKeuangan(viewModel: KeuanganViewModel = viewModel(), selectedMonth: Int?
         colors = CardDefaults.cardColors(containerColor = Color.White),
         elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
     ) {
-        Column(modifier = Modifier.fillMaxSize()) {
-            Row(modifier = Modifier.weight(1f)) {
-                Column(
+        Box(modifier = Modifier.fillMaxSize()) {
+
+            // 🟠 Tombol refresh di pojok kanan atas
+            IconButton(
+                onClick = { viewModel.refreshData() },
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(8.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Refresh,
+                    contentDescription = "Refresh",
+                    tint = Color(0xFF660000),
                     modifier = Modifier
-                        .weight(1f)
-                        .padding(start = 16.dp, top = 16.dp, bottom = 8.dp)
-                ) {
-                    Row {
-                        Canvas(
-                            modifier = Modifier
-                                .size(height = 37.dp, width = 4.dp)
-                                .padding(top = 2.dp)
-                        ) {
-                            drawRect(color = Color(0xFF660000))
-                        }
+                        .size(20.dp)
+                        .rotate(if (isLoading) 360f else 0f)
+                )
+            }
 
-                        Spacer(modifier = Modifier.width(6.dp))
+            // 🟢 Konten utama (Column)
+            Column(modifier = Modifier.fillMaxSize()) {
+                Row(modifier = Modifier.weight(1f)) {
+                    Column(
+                        modifier = Modifier
+                            .weight(1f)
+                            .padding(start = 16.dp, top = 16.dp, bottom = 8.dp)
+                    ) {
+                        Row {
+                            Canvas(
+                                modifier = Modifier
+                                    .size(height = 37.dp, width = 4.dp)
+                                    .padding(top = 2.dp)
+                            ) {
+                                drawRect(color = Color(0xFF660000))
+                            }
 
-                        Column {
-                            Text(
-                                text = "Total Saldo",
-                                style = MaterialTheme.typography.headlineLarge
-                            )
+                            Spacer(modifier = Modifier.width(6.dp))
 
-                            if (isLoading) {
-                                CircularProgressIndicator(
-                                    modifier = Modifier
-                                        .padding(16.dp)
-                                        .align(Alignment.CenterHorizontally),
-                                    color = Color(0xFFFF8B1E)
-                                )
-                            } else {
+                            Column {
                                 Text(
-                                    text = "Rp $totalSaldo",
-                                    style = MaterialTheme.typography.titleMedium,
-                                    color = Color(0xFFFF8B1E),
-                                    modifier = Modifier.padding(start = 5.dp)
+                                    text = "Total Saldo",
+                                    style = MaterialTheme.typography.headlineLarge,
+                                    modifier = Modifier.fillMaxWidth()
                                 )
+
+                                if (isLoading) {
+                                    CircularProgressIndicator(
+                                        modifier = Modifier
+                                            .padding(16.dp)
+                                            .align(Alignment.CenterHorizontally),
+                                        color = Color(0xFFFF8B1E)
+                                    )
+                                } else {
+                                    Text(
+                                        text = "Rp $totalSaldo",
+                                        style = MaterialTheme.typography.titleMedium,
+                                        color = Color(0xFFFF8B1E),
+                                        modifier = Modifier.padding(start = 5.dp)
+                                    )
+                                }
                             }
                         }
                     }
+
+                    Image(
+                        painter = painterResource(R.drawable.gambarkeuangan),
+                        contentDescription = null,
+                        modifier = Modifier
+                            .fillMaxHeight()
+                            .padding(top = 8.dp)
+                            .alpha(0.7f)
+                    )
                 }
 
-                Image(
-                    painter = painterResource(R.drawable.gambarkeuangan),
-                    contentDescription = null,
+                Row(
                     modifier = Modifier
-                        .fillMaxHeight()
-                        .padding(top = 8.dp)
-                        .alpha(0.7f)
-                )
-            }
-            // Bagian tambahan untuk menampilkan pemasukan dan pengeluaran
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp)
-                    .weight(0.6f),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Column {
-                    Text(
-                        text = "Pemasukan",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = Color.Gray
-                    )
-                    Text(
-                        text = "Rp $totalPemasukan",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = Color(0xFF4CAF50) // Warna hijau untuk pemasukan
-                    )
-                }
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                        .weight(0.6f),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Column {
+                        Text(
+                            text = "Pemasukan",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = Color.Gray
+                        )
+                        Text(
+                            text = "Rp $totalPemasukan",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = Color(0xFF4CAF50)
+                        )
+                    }
 
-                Column {
-                    Text(
-                        text = "Pengeluaran",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = Color.Gray
-                    )
-                    Text(
-                        text = "Rp $totalPengeluaran",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = Color(0xFFF44336) // Warna merah untuk pengeluaran
-                    )
+                    Column {
+                        Text(
+                            text = "Pengeluaran",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = Color.Gray
+                        )
+                        Text(
+                            text = "Rp $totalPengeluaran",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = Color(0xFFF44336)
+                        )
+                    }
                 }
             }
         }
     }
+
 }
 
 @Composable
