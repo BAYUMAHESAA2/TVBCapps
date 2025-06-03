@@ -10,10 +10,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Search
@@ -193,22 +191,6 @@ fun TentangAplikasiContent(modifier: Modifier = Modifier) {
                 cursorColor = Color.Gray
             )
         )
-
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(520.dp)
-                .verticalScroll(rememberScrollState())
-                .padding(top = 16.dp)
-        ) {
-            repeat(7) {
-                Text(
-                    "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus imperdiet, nulla et dictum interdum, nisi lorem egestas odio, vitae scelerisque enim ligula venenatis dolor.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.padding(bottom = 8.dp)
-                )
-            }
-        }
     }
 }
 
