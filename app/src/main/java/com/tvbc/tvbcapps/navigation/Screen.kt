@@ -11,7 +11,6 @@ sealed class Screen(val route: String) {
     data object FormAbsen: Screen("formAbsen")
     data object Register: Screen("registerScreen")
     data object Login: Screen("loginScreen")
-    data object TentangAplikasi: Screen("tentangAplikasiScreen")
     data object FormKeuangan: Screen("formKeuangan")
     data object AdminHomeScreen: Screen("adminHomeScreen")
     data object SplashScreen: Screen("splashScreen")

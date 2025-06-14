@@ -324,8 +324,8 @@ fun AbsenAdmin(
     val absenList by viewModel.absenList.collectAsState()
     val context = LocalContext.current
     val currentDate = LocalDate.now()
-    val currentMonth = currentDate.monthValue.toString() // Mengambil bulan sekarang sebagai string
-    val currentDay = currentDate.dayOfMonth.toString() // Mengambil tanggal sekarang sebagai string
+    val currentMonth = currentDate.monthValue.toString()
+    val currentDay = currentDate.dayOfMonth.toString()
 
     val selectedMonth = remember { mutableStateOf(currentMonth) }
     val selectedDate = remember { mutableStateOf(currentDay) }
@@ -389,22 +389,26 @@ fun AbsenAdmin(
         }
 
         Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
+            modifier = Modifier
+                .fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp) // tambahkan jarak antar item
         ) {
             DropdownSelector(
                 label = "Tanggal",
                 options = (1..31).map { it.toString() },
                 selected = selectedDate.value,
-                onSelectedChange = { selectedDate.value = it }
+                onSelectedChange = { selectedDate.value = it },
+                modifier = Modifier.weight(1f)
             )
             DropdownSelector(
                 label = "Bulan",
                 options = (1..12).map { it.toString() },
                 selected = selectedMonth.value,
-                onSelectedChange = { selectedMonth.value = it }
+                onSelectedChange = { selectedMonth.value = it },
+                modifier = Modifier.weight(1f)
             )
         }
+
         Spacer(modifier = Modifier.height(8.dp))
 
         Row(
@@ -477,29 +481,33 @@ fun DropdownSelector(
     label: String,
     options: List<String>,
     selected: String,
-    onSelectedChange: (String) -> Unit
+    onSelectedChange: (String) -> Unit,
+    modifier: Modifier = Modifier
 ) {
     var expanded by remember { mutableStateOf(false) }
 
-    Box {
+    Box(modifier = modifier) {
         OutlinedTextField(
             value = selected,
             onValueChange = {},
             readOnly = true,
             label = { Text(label) },
-            modifier = Modifier.width(150.dp),
+            modifier = modifier.fillMaxWidth(),
             trailingIcon = {
                 IconButton(onClick = { expanded = true }) {
                     Icon(Icons.Default.ArrowDropDown, contentDescription = null)
                 }
-            }
+            },
         )
         DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
             options.forEach { option ->
-                DropdownMenuItem(text = { Text(option) }, onClick = {
-                    onSelectedChange(option)
-                    expanded = false
-                })
+                DropdownMenuItem(
+                    text = { Text(option) },
+                    onClick = {
+                        onSelectedChange(option)
+                        expanded = false
+                    }
+                )
             }
         }
     }

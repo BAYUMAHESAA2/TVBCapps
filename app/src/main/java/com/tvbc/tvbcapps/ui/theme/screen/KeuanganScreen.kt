@@ -84,7 +84,6 @@ fun KeuanganScreen(navController: NavHostController, authViewModel: AuthViewMode
     val isUserLoggedIn = authViewModel.isUserLoggedIn()
     val isUserProfileLoading by authViewModel.isUserProfileLoading.collectAsState()
     val viewModel: AuthViewModel = viewModel()
-
     var viewMode by remember { mutableStateOf(ViewMode.TABLE) }
 
     fun nextViewMode(current: ViewMode): ViewMode {
@@ -154,7 +153,6 @@ fun ScreenContentKeuangan(
 ) {
     val listKeuangan by viewModel.listKeuangan.observeAsState(emptyList())
     val context = LocalContext.current
-
     var selectedMonth by remember { mutableStateOf("") }
     var selectedType by remember { mutableStateOf("") }
 
@@ -167,6 +165,9 @@ fun ScreenContentKeuangan(
 
     LaunchedEffect(Unit) {
         viewModel.fetchAllKeuangan()
+    }
+    LaunchedEffect(Unit) {
+        viewModel.calculateTotalSaldo()
     }
 
     val filteredData = listKeuangan.filter { item ->
@@ -232,7 +233,6 @@ fun ScreenContentKeuangan(
                     }
                 }
             }
-            // Filter Tipe
             Box(
                 modifier = Modifier
                     .weight(1f)
@@ -287,6 +287,10 @@ fun CardKeuangan(viewModel: KeuanganViewModel = viewModel(), selectedMonth: Int?
 
     LaunchedEffect(selectedMonth) {
         viewModel.setMonthFilter(selectedMonth)
+    }
+
+    LaunchedEffect(Unit) {
+        viewModel.calculateTotalSaldo()
     }
 
     Card(

@@ -23,7 +23,6 @@ import com.tvbc.tvbcapps.ui.theme.screen.MainScreen
 import com.tvbc.tvbcapps.ui.theme.screen.NotifikasiScreen
 import com.tvbc.tvbcapps.ui.theme.screen.ProfilScreen
 import com.tvbc.tvbcapps.ui.theme.screen.RegisterScreen
-import com.tvbc.tvbcapps.ui.theme.screen.TentangAplikasiScreen
 import com.tvbc.tvbcapps.ui.theme.screen.FormKeuangan
 import com.tvbc.tvbcapps.ui.theme.screen.SplashScreen
 
@@ -88,9 +87,6 @@ fun SetupNavGraph(
         }
         composable(route = Screen.Keuangan.route) {
             KeuanganScreen(navController)
-        }
-        composable(route = Screen.TentangAplikasi.route) {
-            TentangAplikasiScreen(navController)
         }
         composable(route = Screen.FormAbsen.route) {
             FormAbsenScreen(navController)

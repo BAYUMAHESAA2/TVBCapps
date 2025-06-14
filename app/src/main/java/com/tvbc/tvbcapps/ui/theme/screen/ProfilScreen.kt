@@ -22,7 +22,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -30,6 +29,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -37,6 +37,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
@@ -48,37 +49,18 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
+import coil.compose.AsyncImage
 import com.tvbc.tvbcapps.R
 import com.tvbc.tvbcapps.component.BottomNavigationBar
 import com.tvbc.tvbcapps.component.TopBar
 import com.tvbc.tvbcapps.model.AuthViewModel
 import com.tvbc.tvbcapps.navigation.Screen
 import com.tvbc.tvbcapps.ui.theme.TVBCappsTheme
-import android.Manifest
-import android.net.Uri
-import android.os.Build
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.clickable
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.TextButton
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalContext
-import androidx.core.content.FileProvider
-import coil.compose.AsyncImage
-import java.io.File
 
 @Composable
 fun ProfilScreen(navController: NavHostController) {
     val viewModel: AuthViewModel = viewModel()
 
-    // Check if user is logged in, if not redirect to landing page
     LaunchedEffect(Unit) {
         if (!viewModel.isUserLoggedIn()) {
             navController.navigate(Screen.LandingPage.route) {
@@ -182,14 +164,6 @@ fun ScreenContentProfil(
 
             Spacer(modifier = Modifier.height(15.dp))
 
-            // About App Button
-            ProfileActionButton(
-                icon = Icons.Default.Info,
-                text = stringResource(R.string.tentang_aplikasi),
-                onClick = { navController.navigate(Screen.TentangAplikasi.route) },
-                tint = Color(0xFF660000)
-            )
-
             Spacer(modifier = Modifier.height(15.dp))
 
             // Logout Button
@@ -208,7 +182,6 @@ fun ScreenContentProfil(
         }
     }
 }
-
 
 @Composable
 fun ProfileActionButton(
